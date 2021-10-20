@@ -23,6 +23,11 @@ class Room extends Model
         'creator_id'
     ];
 
+    protected $hidden = [
+        'key',
+        'pivot'
+    ];
+
     public function creator()
     {
         return $this->belongsTo(User::class);
