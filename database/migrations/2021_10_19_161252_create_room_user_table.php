@@ -17,7 +17,9 @@ class CreateRoomUserTable extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained('users')->onDelete('cascade')->onUpdate('cascade');
             $table->foreignId('room_id')->constrained('rooms')->onDelete('cascade')->onUpdate('cascade');
+            $table->enum('role_in_room', ['owner','member'])->default('member');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

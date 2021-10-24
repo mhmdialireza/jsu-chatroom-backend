@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Http\Resources\RoomUserResource;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class RoomResource extends JsonResource
@@ -21,6 +22,16 @@ class RoomResource extends JsonResource
      */
     public function toArray($request)
     {
-        return parent::toArray($request);
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'owner_id' => $this->members()->first()->id,
+            'description' => $this->description,
+            'access' => $this->access,
+            'number_of_members' => $this->number_of_members,
+            'created_at' => $this->created_at,
+            'updated_at' => $this->updated_at,
+            // 'members' =>  UserResource::collection($this->members),
+        ];
     }
 }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
+use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
@@ -15,25 +16,31 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|max:16|min:3',
             'email' => 'required|email|unique:users,email',
-            'password' => 'required|string|confirmed|min:8',
+            'password' => 'required|string|confirmed|min:8|max:16',
         ]);
 
         if ($validator->fails()) {
-            return $validator->getMessageBag();
+            return response()->json(
+                ['error' => $validator->getMessageBag()],
+                400
+            );
         }
 
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => Hash::make($request->password),
+            'role_in_site' => 'user',
         ]);
 
         $token = $user->createToken('myApp')->plainTextToken;
 
-        return [
-            'user' => $user,
-            'token' => $token,
-        ];
+        return response()->json([
+            'success' => [
+                'user' => $user,
+                'token' => $token,
+            ],
+        ]);
     }
 
     public function login(Request $request)
@@ -59,19 +66,23 @@ class AuthController extends Controller
 
         $token = $user->createToken('myApp')->plainTextToken;
 
-        return [
-            'user' => $user,
-            'token' => $token,
-        ];
+        return response()->json([
+            'success' => [
+                'user' => new UserResource($user),
+                'token' => $token,
+            ],
+        ]);
     }
 
     public function logout()
     {
-        // $user = auth()->user();
-        // auth()
-        //     ->user()
-        //     ->tokens()
-        //     ->delete();
-        // return $user;
+        $user = auth()->user();
+        auth()
+            ->user()
+            ->tokens()
+            ->delete();
+        return response()->json([
+            'success' => 'کاربر با موفقیت از سایت خارج شد.',
+        ]);
     }
 }

@@ -4,15 +4,8 @@ namespace App\Http\Resources;
 
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class UserResource extends JsonResource
+class RoomUserResource extends JsonResource
 {
-    /**
-     * The "data" wrapper that should be applied.
-     *
-     * @var string
-     */
-    public static $wrap = 'user';
-
     /**
      * Transform the resource into an array.
      *
@@ -28,7 +21,7 @@ class UserResource extends JsonResource
             'role_in_site' => $this->role_in_site,
             'created_at' => $this->created_at,
             'updated_at' => $this->updated_at,
-            'role_in_room' => $this->pivot->role_in_room ?? null,
+            'role_in_room' => $this->pivot->role_in_room,
         ];
     }
 }

@@ -3,13 +3,14 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable;
+    use HasApiTokens, HasFactory, Notifiable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -20,7 +21,6 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
-        'is_admin',
     ];
 
     /**
@@ -30,17 +30,11 @@ class User extends Authenticatable
      */
     protected $hidden = [
         'password',
-        'pivot'
     ];
 
     public function rooms()
     {
-        return $this->belongsToMany(Room::class);
-    }
-
-    public function madeRooms()
-    {
-        return $this->hasMany(Room::class, 'creator_id');
+        return $this->belongsToMany(Room::class)->withPivot('role_in_room');
     }
 
     public function messages()

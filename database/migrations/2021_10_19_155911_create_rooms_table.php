@@ -17,11 +17,11 @@ class CreateRoomsTable extends Migration
             $table->id();
             $table->string('name')->unique();
             $table->text('description')->nullable();
-            $table->boolean('is_private')->default(0);
+            $table->enum('access', ['private', 'public']);
             $table->string('key')->nullable();
             $table->integer('number_of_members')->default(1);
-            $table->foreignId('creator_id')->constrained('users')->onDelete('cascade')->onUpdate('cascade');
             $table->timestamps();
+            $table->softDeletes();
         });
     }
 

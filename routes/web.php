@@ -15,6 +15,6 @@ use App\Models\Room;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('auth:sanctum')->get('/', function () {
-    return Room::where('name', 'first-rokom')->firstOrFail();
+Route::get('rooms', function () {
+    return Room::find(1)->members;
 });

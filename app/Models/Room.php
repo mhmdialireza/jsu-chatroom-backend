@@ -5,10 +5,11 @@ namespace App\Models;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Room extends Model
 {
-    use HasFactory;
+    use HasFactory, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -18,24 +19,17 @@ class Room extends Model
     protected $fillable = [
         'name',
         'description',
-        'is_private',
+        'access',
         'key',
-        'creator_id'
+        'role_in_room'
     ];
 
     protected $hidden = [
         'key',
-        'pivot'
     ];
-
-    public function creator()
+    public function members()
     {
-        return $this->belongsTo(User::class);
-    }
-
-    public function users()
-    {
-        return $this->belongsToMany(User::class);
+        return $this->belongsToMany(User::class)->withPivot('role_in_room');
     }
 
     public function messages()

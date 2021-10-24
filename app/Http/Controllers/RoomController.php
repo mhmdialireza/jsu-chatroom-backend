@@ -8,79 +8,79 @@ use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Http\Resources\RoomResource;
+use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Hash;
+use App\Http\Resources\RoomUserResource;
 use Illuminate\Support\Facades\Validator;
 
 class RoomController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
+    public function index(Request $request)
     {
+        return $request->all();
         $rooms = Room::paginate(10);
-        return RoomResource::collection($rooms);
+        return response()->json([
+            'users' => RoomResource::collection($rooms->load('members')),
+        ]);
     }
 
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|max:16|min:3|unique:rooms,name',
-            'is_private' => 'boolean',
+            'access' => ['required', Rule::in(['private', 'public'])],
             'description' => 'max:512|min:3',
         ]);
 
         if ($validator->fails()) {
-            return $validator->getMessageBag();
+            return response()->json(
+                ['error' => $validator->getMessageBag()],
+                400
+            );
         }
 
-        if ($request->is_private == 1) {
+        if ($request->access == 'private') {
             $room = Room::create([
                 'name' => $request->name,
                 'description' => $request->description,
-                'is_private' => 1,
-                'key' => Hash::make(Str::random(16)),
-                'creator_id' => auth()->user()->id,
+                'access' => 'private',
+                'key' => Hash::make($key = Str::random(16)),
             ]);
         } else {
             $room = Room::create([
                 'name' => $request->name,
                 'description' => $request->description,
-                'creator_id' => auth()->user()->id,
+                'access' => 'public',
             ]);
         }
 
-        $room->users()->save(auth()->user());
+        $room->members()->attach(auth()->user(), ['role_in_room' => 'owner']);
 
-        return $room;
+        return response()->json(
+            ['success' => 'اتاق جدید با موفقیت ایجاد شد.', 'kay' => $key],
+            201
+        );
     }
 
-    public function join(Request $request, $roomId)
+    public function join(Request $request)
     {
-        $room = null;
-
         try {
-            $room = Room::find($roomId)->firstOrFail();
+            $room = Room::where('name', $request->name)->firstOrFail();
         } catch (\Throwable $th) {
-            return 'اتاقی با این مشخصات وجود ندارد';
+            return response()->json(
+                ['error', 'اتاقی با این مشخصات وجود ندارد'],
+                404
+            );
         }
 
-        if ($room->users->contains(auth()->user())) {
+        if ($room->members->contains(auth()->user())) {
             return response()->json([
                 'error' =>
                     'شما جز اعضای گروه هستید ، نمی‌توانید مجدد عضو شوید.',
             ]);
         }
 
-        if ($room->is_private) {
+        if ($room->access == 'private') {
             if (!isset($request->key)) {
                 return response()->json([
                     'error' => 'این گروه خصوصی است و نیاز به کلید دارد.',
@@ -94,88 +94,129 @@ class RoomController extends Controller
             }
         }
 
-        $room->users()->save(auth()->user());
+        $room->members()->attach(auth()->user(), ['role_in_room' => 'member']);
         $room->increment('number_of_members');
         return 'ok';
     }
 
-    public function resetKey(Request $request, $roomId)
+    public function left(Request $request)
     {
-        $room = null;
-
         try {
-            $room = Room::find($roomId)->firstOrFail();
+            $room = Room::where('name', $request->name)->firstOrFail();
         } catch (\Throwable $th) {
-            return 'اتاقی با این مشخصات وجود ندارد';
+            return response()->json(
+                ['error', 'اتاقی با این مشخصات وجود ندارد'],
+                404
+            );
         }
 
-        if (!$room->is_private) {
-            return 'این گروه عمومی است و کلید ندارد';
+        if (!$room->members->contains(auth()->user())) {
+            return response()->json([
+                'error' => 'شما جز اعضای گروه نیستید.',
+            ]);
         }
 
-        if (
-            auth()->user()->is_admin != 1 &&
-            auth()->user()->id != $room->creator_id
-        ) {
+        $room->members()->attach(auth()->user(), ['role_in_room' => 'member']);
+        $room->decrement('number_of_members');
+        return 'ok';
+    }
+
+    public function resetKey(Request $request)
+    {
+        try {
+            $room = Room::where('name', $request->name)->firstOrFail();
+        } catch (\Throwable $th) {
+            return response()->json(
+                ['error', 'اتاقی با این مشخصات وجود ندارد'],
+                404
+            );
+        }
+
+        if ($room->access != 'private') {
+            return response()->json(['error' => 'این گروه عمومی است.']);
+        }
+
+        if (auth()->user()->id != $room->members()->first()->id) {
             return response()->json(
                 ['error' => 'اجازه دسترسی وجود ندارد'],
                 403
             );
         }
 
+        if ($request->auto_generate && $request->auto_generate == 1) {
+            $validator = Validator::make($request->all(), [
+                'key' => 'required',
+            ]);
+
+            if (!Hash::check($request->key, $room->key)) {
+                return response()->json(
+                    ['کلید وارده شده با کلید اصلی تطابق ندارد.'],
+                    403
+                );
+            }
+
+            $room->update(['key' => Hash::make($key = Str::random(16))]);
+            return response()->json([
+                'success' => 'کلید با موفقیت ریست شد.',
+                'key' => $key,
+            ]);
+        }
+
         $validator = Validator::make($request->all(), [
             'key' => 'required',
-            'newKey' => 'required|confirmed|min:16|max:16',
+            'newKey' => 'required|confirmed|min:6|max:32',
         ]);
 
         if ($validator->fails()) {
-            return $validator->getMessageBag();
+            return response()->json(
+                ['error' => $validator->getMessageBag()],
+                400
+            );
         }
 
         if (!Hash::check($request->key, $room->key)) {
-            return 'کلید اصلی تطابق ندارد.';
+            return response()->json(
+                ['کلید وارده شده با کلید اصلی تطابق ندارد.'],
+                403
+            );
         }
 
         $room->update(['key' => Hash::make($request->newKey)]);
 
-        return 'ok';
+        return response()->json([
+            'success' => 'کلید با موفقیت ریست شد.',
+        ]);
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function show(string $name)
     {
         try {
-            return new RoomResource(Room::where('name', $name)->firstOrFail());
+            return [
+                'room' => ($room = new RoomResource(
+                    Room::where('name', $name)->firstOrFail()
+                )),
+                'members' => UserResource::collection($room->members),
+            ];
         } catch (\Throwable $th) {
-            return 'اتاقی با این مشخصات وجود ندارد';
+            return response()->json(
+                ['error', 'اتاقی با این مشخصات وجود ندارد'],
+                404
+            );
         }
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function update(Request $request, $id)
     {
-        $room = null;
         try {
             $room = Room::find($id)->firstOrFail();
         } catch (\Throwable $th) {
-            return 'اتاقی با این مشخصات وجود ندارد';
+            return response()->json(
+                ['error', 'اتاقی با این مشخصات وجود ندارد'],
+                404
+            );
         }
 
-        if (
-            auth()->user()->is_admin != 1 &&
-            auth()->user()->id != $room->creator_id
-        ) {
+        if (auth()->user()->id != $room->members()->first()->id) {
             return response()->json(
                 ['error' => 'اجازه دسترسی وجود ندارد'],
                 403
@@ -190,21 +231,22 @@ class RoomController extends Controller
                 Rule::unique('rooms')->ignore($id),
             ],
             'description' => 'required|max:512|min:3',
-            'is_private' => 'required|boolean',
+            'access' => ['required', Rule::in(['private', 'public'])],
         ]);
 
         if ($validator->fails()) {
-            return $validator->getMessageBag();
+            return response()->json(
+                ['error' => $validator->getMessageBag()],
+                400
+            );
         }
 
-        $newKey = Str::random(16);
-
-        if ($request->is_private == $room->is_private) {
+        if ($request->access == $room->access) {
             $room->update([
                 'name' => $request->name,
                 'description' => $request->description,
             ]);
-        } elseif ($request->is_private == 0) {
+        } elseif ($request->is_private == 'public') {
             $room->update([
                 'name' => $request->name,
                 'description' => $request->description,
@@ -216,7 +258,7 @@ class RoomController extends Controller
                 'name' => $request->name,
                 'description' => $request->description,
                 'is_private' => 1,
-                'key' => Hash::make($newKey),
+                'key' => Hash::make($newKey = Str::random(16)),
             ]);
             return response()->json(['room' => $room, 'key' => $newKey]);
         }
@@ -224,25 +266,18 @@ class RoomController extends Controller
         return response()->json(['room' => $room]);
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
     public function destroy($id)
     {
-        $room = null;
         try {
             $room = Room::find($id)->firstOrFail();
         } catch (\Throwable $th) {
-            return 'اتاقی با این مشخصات وجود ندارد';
+            return response()->json(
+                ['error', 'اتاقی با این مشخصات وجود ندارد'],
+                404
+            );
         }
 
-        if (
-            auth()->user()->is_admin != 1 &&
-            auth()->user()->id != $room->creator_id
-        ) {
+        if (auth()->user()->id != $room->members()->first()->id) {
             return response()->json(
                 ['error' => 'اجازه دسترسی وجود ندارد'],
                 403
@@ -251,6 +286,9 @@ class RoomController extends Controller
 
         $room->delete();
 
-        return response()->json(['ok', 'اتاق مورد نظر حذف شد.']);
+        return response()->json(
+            ['success', 'اتاق مورد نظر با موفقیت حذف شد.'],
+            202
+        );
     }
 }
