@@ -20,14 +20,6 @@
 
     None 
 
-    **Required:**
- 
-    `id=[integer]`
-
-    **Optional:**
- 
-    `photo_id=[alphanumeric]`
-
   * **Dody Params**
 
     _name_ <br>
