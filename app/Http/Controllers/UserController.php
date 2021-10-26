@@ -9,7 +9,6 @@ use App\Http\Resources\UserResource;
 
 class UserController extends Controller
 {
-
     public function index()
     {
         $users = User::paginate(10);
@@ -26,13 +25,10 @@ class UserController extends Controller
                 'rooms' => RoomResource::collection($user->rooms),
             ];
         } catch (\Throwable $th) {
-            return 'کاریری با این مشخصات وجود ندارد'; //TODO
+            return response()->json([
+                'error' => 'کاربری با این مشخصات وجود ندارد.',
+            ],404);
         }
-    }
-
-    public function update(Request $request, $id)
-    {
-        //
     }
 
     public function destroy(int $id)

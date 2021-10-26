@@ -41,10 +41,11 @@ class Handler extends ExceptionHandler
         });
     }
 
-    public function render($request, Throwable $e)
-    {
-        if ($e->getMessage() == 'Unauthenticated.') {
-            return response()->json(['error' => "ابتدا وارد سایت شوید"], 403);
-        }
-    }
+    // public function render($request, Throwable $e)
+    // {
+    //     if ($e->getMessage() == 'Unauthenticated.') {
+    //         return response()->json(['error' => "ابتدا وارد سایت شوید"], 403);
+    //     }
+    //     return response()->json(['error' => $e->getMessage()]);
+    // }
 }

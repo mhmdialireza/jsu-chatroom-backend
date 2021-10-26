@@ -46,6 +46,7 @@ Route::prefix('rooms')
     ->middleware('auth:sanctum')
     ->group(function () {
         Route::get('', [RoomController::class, 'index']);
+        Route::get('/user', [RoomController::class, 'userRooms']);
         Route::get('/{name}', [RoomController::class, 'show']);
         Route::post('/', [RoomController::class, 'store']);
         Route::put('/join', [RoomController::class, 'join']);

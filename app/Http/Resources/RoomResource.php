@@ -2,7 +2,9 @@
 
 namespace App\Http\Resources;
 
+use App\Http\Resources\UserResource;
 use App\Http\Resources\RoomUserResource;
+use Hekmatinasser\Verta\Verta;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class RoomResource extends JsonResource
@@ -22,6 +24,11 @@ class RoomResource extends JsonResource
      */
     public function toArray($request)
     {
+        $date = explode('-',explode(' ',$this->created_at)[0]);
+        $dateArray = Verta::getJalali(...$date);
+        $time = explode(':',explode(' ',$this->created_at)[1]);
+
+        $date =[ 'year'=> $dateArray[0] ,'month' => $dateArray[1], 'day' => $dateArray[2], 'hour' =>(int) $time[0] ,'minute' => (int)$time[1], 'seconde' => (int)$time[2]];
         return [
             'id' => $this->id,
             'name' => $this->name,
@@ -29,9 +36,9 @@ class RoomResource extends JsonResource
             'description' => $this->description,
             'access' => $this->access,
             'number_of_members' => $this->number_of_members,
-            'created_at' => $this->created_at,
-            'updated_at' => $this->updated_at,
+            'created_at' => $date,
             // 'members' =>  UserResource::collection($this->members),
+            'last_message' => $this->messages()->first(),
         ];
     }
 }

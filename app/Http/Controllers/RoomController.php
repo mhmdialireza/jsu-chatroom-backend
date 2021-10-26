@@ -17,11 +17,25 @@ class RoomController extends Controller
 {
     public function index(Request $request)
     {
-        return $request->all();
-        $rooms = Room::paginate(10);
+        $allRooms = Room::all();
+
+        $customRooms = $allRooms->filter(function ($value) {
+            $userRooms = auth()->user()->rooms;
+            return !$userRooms->contains($value);
+        });
+
         return response()->json([
-            'users' => RoomResource::collection($rooms->load('members')),
+            'rooms' => RoomResource::collection($customRooms),
         ]);
+    }
+
+    public function userRooms()
+    {
+        $rooms = auth()
+            ->user()
+            ->rooms()
+            ->paginate(10);
+        return RoomResource::collection($rooms);
     }
 
     public function store(Request $request)
@@ -40,26 +54,37 @@ class RoomController extends Controller
         }
 
         if ($request->access == 'private') {
+            $key = Str::random(16);
             $room = Room::create([
                 'name' => $request->name,
                 'description' => $request->description,
                 'access' => 'private',
-                'key' => Hash::make($key = Str::random(16)),
+                'key' => Hash::make($key),
             ]);
+            $room
+                ->members()
+                ->attach(auth()->user(), ['role_in_room' => 'owner']);
+
+            return response()->json(
+                ['success' => 'اتاق جدید با موفقیت ایجاد شد.', 'key' => $key],
+                201
+            );
         } else {
             $room = Room::create([
                 'name' => $request->name,
                 'description' => $request->description,
                 'access' => 'public',
             ]);
+
+            $room
+                ->members()
+                ->attach(auth()->user(), ['role_in_room' => 'owner']);
+
+            return response()->json(
+                ['success' => 'اتاق جدید با موفقیت ایجاد شد.'],
+                201
+            );
         }
-
-        $room->members()->attach(auth()->user(), ['role_in_room' => 'owner']);
-
-        return response()->json(
-            ['success' => 'اتاق جدید با موفقیت ایجاد شد.', 'kay' => $key],
-            201
-        );
     }
 
     public function join(Request $request)
@@ -68,9 +93,15 @@ class RoomController extends Controller
             $room = Room::where('name', $request->name)->firstOrFail();
         } catch (\Throwable $th) {
             return response()->json(
-                ['error', 'اتاقی با این مشخصات وجود ندارد'],
+                ['error' => 'اتاقی با این مشخصات وجود ندارد'],
                 404
             );
+        }
+
+        if ($room->members->count() == 50) {
+            return response()->json([
+                'error' => 'تعداد اعضای گروه به حداکثر میزان خود رسیده است.',
+            ]);
         }
 
         if ($room->members->contains(auth()->user())) {
@@ -96,7 +127,9 @@ class RoomController extends Controller
 
         $room->members()->attach(auth()->user(), ['role_in_room' => 'member']);
         $room->increment('number_of_members');
-        return 'ok';
+        return response()->json([
+            'error' => 'با موفقیت در گروه عضو شدید.',
+        ]);
     }
 
     public function left(Request $request)
@@ -105,7 +138,7 @@ class RoomController extends Controller
             $room = Room::where('name', $request->name)->firstOrFail();
         } catch (\Throwable $th) {
             return response()->json(
-                ['error', 'اتاقی با این مشخصات وجود ندارد'],
+                ['error' => 'اتاقی با این مشخصات وجود ندارد'],
                 404
             );
         }
@@ -116,9 +149,10 @@ class RoomController extends Controller
             ]);
         }
 
-        $room->members()->attach(auth()->user(), ['role_in_room' => 'member']);
+        $room->members()->detach(auth()->user());
         $room->decrement('number_of_members');
-        return 'ok';
+
+        return response()->json(['success' => 'با موفقیت از گروه خارج شدید.']);
     }
 
     public function resetKey(Request $request)
@@ -127,7 +161,7 @@ class RoomController extends Controller
             $room = Room::where('name', $request->name)->firstOrFail();
         } catch (\Throwable $th) {
             return response()->json(
-                ['error', 'اتاقی با این مشخصات وجود ندارد'],
+                ['error' => 'اتاقی با این مشخصات وجود ندارد'],
                 404
             );
         }
@@ -143,18 +177,18 @@ class RoomController extends Controller
             );
         }
 
+        $validator = Validator::make($request->all(), [
+            'key' => 'required',
+        ]);
+
+        if (!Hash::check($request->key, $room->key)) {
+            return response()->json(
+                ['کلید وارده شده با کلید اصلی تطابق ندارد.'],
+                403
+            );
+        }
+
         if ($request->auto_generate && $request->auto_generate == 1) {
-            $validator = Validator::make($request->all(), [
-                'key' => 'required',
-            ]);
-
-            if (!Hash::check($request->key, $room->key)) {
-                return response()->json(
-                    ['کلید وارده شده با کلید اصلی تطابق ندارد.'],
-                    403
-                );
-            }
-
             $room->update(['key' => Hash::make($key = Str::random(16))]);
             return response()->json([
                 'success' => 'کلید با موفقیت ریست شد.',
@@ -163,7 +197,6 @@ class RoomController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'key' => 'required',
             'newKey' => 'required|confirmed|min:6|max:32',
         ]);
 
@@ -171,13 +204,6 @@ class RoomController extends Controller
             return response()->json(
                 ['error' => $validator->getMessageBag()],
                 400
-            );
-        }
-
-        if (!Hash::check($request->key, $room->key)) {
-            return response()->json(
-                ['کلید وارده شده با کلید اصلی تطابق ندارد.'],
-                403
             );
         }
 
@@ -199,7 +225,7 @@ class RoomController extends Controller
             ];
         } catch (\Throwable $th) {
             return response()->json(
-                ['error', 'اتاقی با این مشخصات وجود ندارد'],
+                ['error' => 'اتاقی با این مشخصات وجود ندارد'],
                 404
             );
         }
@@ -211,7 +237,7 @@ class RoomController extends Controller
             $room = Room::find($id)->firstOrFail();
         } catch (\Throwable $th) {
             return response()->json(
-                ['error', 'اتاقی با این مشخصات وجود ندارد'],
+                ['error' => 'اتاقی با این مشخصات وجود ندارد'],
                 404
             );
         }
@@ -246,18 +272,18 @@ class RoomController extends Controller
                 'name' => $request->name,
                 'description' => $request->description,
             ]);
-        } elseif ($request->is_private == 'public') {
+        } elseif ($request->access == 'public') {
             $room->update([
                 'name' => $request->name,
                 'description' => $request->description,
-                'is_private' => 0,
+                'access' => 'public',
                 'key' => null,
             ]);
         } else {
             $room->update([
                 'name' => $request->name,
                 'description' => $request->description,
-                'is_private' => 1,
+                'access' => 'private',
                 'key' => Hash::make($newKey = Str::random(16)),
             ]);
             return response()->json(['room' => $room, 'key' => $newKey]);
@@ -272,7 +298,7 @@ class RoomController extends Controller
             $room = Room::find($id)->firstOrFail();
         } catch (\Throwable $th) {
             return response()->json(
-                ['error', 'اتاقی با این مشخصات وجود ندارد'],
+                ['error' => 'اتاقی با این مشخصات وجود ندارد'],
                 404
             );
         }

@@ -57,11 +57,13 @@ class AuthController extends Controller
         $user = User::whereEmail($request->email)->first();
 
         if (!$user) {
-            return "this user didn't exist";
+            return response()->json([
+                'error' => 'کاربری با این مشخصات وجود ندارد.',
+            ]);
         }
 
         if (!Hash::check($request->password, $user->password)) {
-            return "password doesn't correct";
+            return response()->json(['error' => 'رمزعبور اشتباه است.']);
         }
 
         $token = $user->createToken('myApp')->plainTextToken;

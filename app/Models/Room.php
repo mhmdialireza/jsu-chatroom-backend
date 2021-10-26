@@ -24,6 +24,10 @@ class Room extends Model
         'role_in_room'
     ];
 
+    protected $casts = [
+        'created_at' => 'immutable_datetime',
+    ];
+
     protected $hidden = [
         'key',
     ];

@@ -23,13 +23,15 @@ class MessageController extends Controller
         try {
             $room = Room::find($roomId)->firstOrFail();
         } catch (\Throwable $th) {
-            return 'اتاقی با این مشخصات وجود ندارد'; //TODO
+            return response()->json([
+                'error' => 'اتاقی با این مشخصات وجود ندارد.',
+            ]);
         }
 
         if (!$room->members->contains(auth()->user())) {
             return response()->json([
-                'error' => 'اجازه دسترسی وجود ندارد.',
-            ]);
+                'error' => 'شما در گروه عضو نیستید',
+            ],403);
         }
 
         $message = Message::where('room_id', $roomId)->paginate(50);
