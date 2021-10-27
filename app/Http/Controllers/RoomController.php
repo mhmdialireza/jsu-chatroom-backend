@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Room;
+use App\Models\User;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -237,7 +238,7 @@ class RoomController extends Controller
     public function update(Request $request, $id)
     {
         try {
-            $room = Room::find($id)->firstOrFail();
+            $room = Room::whereId($id)->firstOrFail();
         } catch (\Throwable $th) {
             return response()->json(
                 ['error' => 'اتاقی با این مشخصات وجود ندارد'],
@@ -298,7 +299,7 @@ class RoomController extends Controller
     public function destroy($id)
     {
         try {
-            $room = Room::find($id)->firstOrFail();
+            $room = Room::whereId($id)->firstOrFail();
         } catch (\Throwable $th) {
             return response()->json(
                 ['error' => 'اتاقی با این مشخصات وجود ندارد'],
@@ -306,7 +307,7 @@ class RoomController extends Controller
             );
         }
 
-        if (auth()->user()->id != (new RoomResource($room))->owner_id) {
+        if (auth()->user()->id != $room->members()->first()->id) {
             return response()->json(
                 ['error' => 'اجازه دسترسی وجود ندارد'],
                 403
@@ -317,6 +318,47 @@ class RoomController extends Controller
 
         return response()->json(
             ['success' => 'اتاق مورد نظر با موفقیت حذف شد.'],
+            202
+        );
+    }
+
+    public function deleteMember($roomId, $userId)
+    {
+        try {
+            $room = Room::whereId($roomId)->firstOrFail();
+        } catch (\Throwable $th) {
+            return response()->json(
+                ['error' => 'اتاقی با این مشخصات وجود ندارد'],
+                404
+            );
+        }
+
+        try {
+            $user = User::whereId($userId)->firstOrFail();
+        } catch (\Throwable $th) {
+            return response()->json(
+                ['error' => 'کاربری با این مشخصات وجود ندارد.'],
+                404
+            );
+        }
+
+        if (auth()->user()->id == $userId) {
+            return response()->json(
+                ['error' => 'شما نمیتوانید خودتان را حذف کنید.'],
+                400
+            );
+        }
+
+        if (auth()->user()->id != $room->members()->first()->id) {
+            return response()->json(
+                ['error' => 'اجازه دسترسی وجود ندارد'],
+                403
+            );
+        }
+        $room->members()->detach($user);
+
+        return response()->json(
+            ['success' => 'کاربر مورد نظر با موفقیت از گروه حذف شد.'],
             202
         );
     }

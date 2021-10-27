@@ -306,7 +306,7 @@ ___
 
 * **URL**
 
-  _/rooms/delete/{room_id}_
+  _/rooms/{room_id}_
 
 * **Method:**
 
@@ -316,6 +316,20 @@ ___
 
   None
 
+### **Delete member**
+<_(it needs auth token)._>
+
+* **URL**
+
+  _/rooms/{room_id}/user/{user_id}_
+
+* **Method:**
+
+  `DELETE`
+
+* **Dody Params**
+
+  None
 
 ## **Message** 
 ___

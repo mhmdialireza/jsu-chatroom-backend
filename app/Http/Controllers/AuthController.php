@@ -55,11 +55,11 @@ class AuthController extends Controller
             'email' => 'required|email',
             'password' => 'required|string|min:8',
         ]);
-
+        
         if ($validator->fails()) {
-            return $this->fail($validator->getMessageBag());
+            return $validator->getMessageBag();
         }
-
+        
         $user = User::whereEmail($request->email)->first();
 
         if (!$user) {

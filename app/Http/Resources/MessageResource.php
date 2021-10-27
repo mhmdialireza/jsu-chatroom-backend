@@ -2,24 +2,14 @@
 
 namespace App\Http\Resources;
 
+use App\Models\User;
 use Hekmatinasser\Verta\Verta;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 class MessageResource extends JsonResource
 {
-    /**
-     * The "data" wrapper that should be applied.
-     *
-     * @var string
-     */
     public static $wrap = 'message';
 
-    /**
-     * Transform the resource into an array.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return array|\Illuminate\Contracts\Support\Arrayable|\JsonSerializable
-     */
     public function toArray($request)
     {
         $date = explode('-',explode(' ',$this->created_at)[0]);
@@ -30,8 +20,8 @@ class MessageResource extends JsonResource
         
         return [
             'id' => $this->id,
-            'message' => $this->message,
-            'user_id' => $this->user_id,
+            'text' => $this->message,
+            'user_name' => (new UserResource(User::find($this->user_id)))->name,
             'room_id' => $this->room_id,
             'created_at' => $date,
         ];
