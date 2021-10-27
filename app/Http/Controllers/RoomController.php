@@ -3,14 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\Room;
-use App\Models\User;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Http\Resources\RoomResource;
 use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Hash;
-use App\Http\Resources\RoomUserResource;
 use Illuminate\Support\Facades\Validator;
 
 class RoomController extends Controller
@@ -41,7 +39,12 @@ class RoomController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|max:16|min:3|unique:rooms,name',
+            'name' => [
+                'required',
+                'max:16',
+                'min:3',
+                Rule::unique('rooms')->withoutTrashed(),
+            ],
             'access' => ['required', Rule::in(['private', 'public'])],
             'description' => 'max:512|min:3',
         ]);
@@ -313,7 +316,7 @@ class RoomController extends Controller
         $room->delete();
 
         return response()->json(
-            ['success', 'اتاق مورد نظر با موفقیت حذف شد.'],
+            ['success' => 'اتاق مورد نظر با موفقیت حذف شد.'],
             202
         );
     }

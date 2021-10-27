@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Validation\Rule;
 use App\Models\User;
 use Illuminate\Http\Request;
 use App\Http\Controllers\Controller;
@@ -16,6 +17,11 @@ class AuthController extends Controller
         $validator = Validator::make($request->all(), [
             'name' => 'required|max:16|min:3',
             'email' => 'required|email|unique:users,email',
+            'email' => [
+                'required',
+                'email',
+                Rule::unique('users')->withoutTrashed(),
+            ],
             'password' => 'required|string|confirmed|min:8|max:16',
         ]);
 
