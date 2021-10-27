@@ -79,10 +79,7 @@ class AuthController extends Controller
     public function logout()
     {
         $user = auth()->user();
-        auth()
-            ->user()
-            ->tokens()
-            ->delete();
+        $user->tokens()->delete();
         return response()->json([
             'success' => 'کاربر با موفقیت از سایت خارج شد.',
         ]);

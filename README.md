@@ -286,7 +286,7 @@ ___
 
 * **URL**
 
-  _/rooms/{room_id}_
+  _/rooms/update/{room_id}_
 
 * **Method:**
 
@@ -301,26 +301,20 @@ ___
   **if access is private you should send key**
   _key_ <br>
 
-### **Edit room**
+### **Delete room**
 <_(it needs auth token)._>
 
 * **URL**
 
-  _/rooms/{room_id}_
+  _/rooms/delete/{room_id}_
 
 * **Method:**
 
-  `PUT`
+  `DELETE`
 
 * **Dody Params**
 
-  _name_ <br>
-  _description_ <br>
-  _access_ <br>
-  
-  **if access is private you should send key**
-  _key_ <br>
-
+  None
 
 
 ## **Message** 
@@ -342,7 +336,7 @@ ___
 
   * **Dody Params**
    
-    none
+    None
 
 ### **Send message**
 <_(it needs auth token)._>
