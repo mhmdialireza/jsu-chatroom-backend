@@ -53,7 +53,7 @@ Route::prefix('rooms')
         Route::put('/left', [RoomController::class, 'left']);
         Route::put('/reset-key', [RoomController::class, 'resetKey']);
         Route::put('/update/{id}', [RoomController::class, 'update']);
-        Route::delete('/delete/{id}', [RoomController::class, 'delete']);
+        Route::delete('/delete/{id}', [RoomController::class, 'destroy']);
     });
 
 //messages
