@@ -15,6 +15,6 @@ use App\Models\Room;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Route;
 
-Route::get('rooms', function () {
-    return Room::find(1)->members;
+Route::get('/', function () {
+    return Room::find(1)->members()->first()->withOutTrash();
 });

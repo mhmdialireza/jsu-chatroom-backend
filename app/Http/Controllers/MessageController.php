@@ -16,7 +16,7 @@ class MessageController extends Controller
     public function index($roomId)
     {
         try {
-            $room = Room::find($roomId)->firstOrFail();
+            $room = Room::whereId($roomId)->firstOrFail();
         } catch (\Throwable $th) {
             return response()->json([
                 'error' => 'اتاقی با این مشخصات وجود ندارد.',
@@ -24,15 +24,18 @@ class MessageController extends Controller
         }
 
         if (!$room->members->contains(auth()->user())) {
-            return response()->json([
-                'error' => 'شما در گروه عضو نیستید',
-            ],403);
+            return response()->json(
+                [
+                    'error' => 'شما در گروه عضو نیستید',
+                ],
+                403
+            );
         }
 
         $message = Message::where('room_id', $roomId)->paginate(50);
         return MessageResource::collection($message);
     }
-    
+
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -48,21 +51,20 @@ class MessageController extends Controller
         }
 
         try {
-            $room = Room::find($request->room_id)->firstOrFail();
+            $room = Room::whereId($request->room_id)->firstOrFail();
         } catch (\Throwable $th) {
             return response()->json(
-                ['error'=> 'اتاقی با این مشخصات وجود ندارد'],
+                ['error' => 'اتاقی با این مشخصات وجود ندارد'],
                 404
             );
         }
-        
-        if(!$room->members->contains(auth()->user())){
+
+        if (!$room->members->contains(auth()->user())) {
             return response()->json(
-                ['error'=> 'کاربری با این مشخصات وجود ندارد.'],
+                ['error' => 'کاربری با این مشخصات وجود ندارد.'],
                 404
             );
         }
-        
 
         Message::create([
             'message' => $request->message,

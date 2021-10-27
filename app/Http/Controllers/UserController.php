@@ -20,7 +20,7 @@ class UserController extends Controller
         try {
             return [
                 'user' => ($user = new UserResource(
-                    User::find($id)->firstOrFail()
+                    User::whereId($id)->firstOrFail()
                 )),
                 'rooms' => RoomResource::collection($user->rooms),
             ];
@@ -31,14 +31,14 @@ class UserController extends Controller
         }
     }
 
-    public function destroy(int $id)
+    public function destroy($id)
     {
         if (auth()->user()->role_in_site != 'admin') {
             return response()->json(['error'=> 'اجازه دسترسی وجود ندارد'], 403);
         }
 
         try {
-            $user = User::find($id)->firstOrFail();
+            $user = User::whereId($id)->firstOrFail();
             $user->delete();
             return response()->json(['success'=> 'کاربر با موفقیت حذف شد.']);
         } catch (\Throwable $th) {
