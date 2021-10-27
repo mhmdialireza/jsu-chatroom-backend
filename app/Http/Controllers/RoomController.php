@@ -306,7 +306,7 @@ class RoomController extends Controller
             );
         }
 
-        if (auth()->user()->id != $room->members()->first()->id) {
+        if (auth()->user()->id != (new RoomResource($room))->owner_id) {
             return response()->json(
                 ['error' => 'اجازه دسترسی وجود ندارد'],
                 403

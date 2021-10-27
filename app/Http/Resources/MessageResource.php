@@ -30,7 +30,7 @@ class MessageResource extends JsonResource
         
         return [
             'id' => $this->id,
-            'text' => $this->name,
+            'message' => $this->message,
             'user_id' => $this->user_id,
             'room_id' => $this->room_id,
             'created_at' => $date,

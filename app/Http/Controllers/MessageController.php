@@ -13,11 +13,6 @@ use Illuminate\Support\Facades\Validator;
 
 class MessageController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
     public function index($roomId)
     {
         try {
@@ -37,17 +32,12 @@ class MessageController extends Controller
         $message = Message::where('room_id', $roomId)->paginate(50);
         return MessageResource::collection($message);
     }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
-     */
+    
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'message' => 'required|min:1|max:1024',
+            'room_id' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -58,26 +48,25 @@ class MessageController extends Controller
         }
 
         try {
-            Room::find($request->room_id)->firstOrFail();
+            $room = Room::find($request->room_id)->firstOrFail();
         } catch (\Throwable $th) {
             return response()->json(
-                ['error', 'اتاقی با این مشخصات وجود ندارد'],
+                ['error'=> 'اتاقی با این مشخصات وجود ندارد'],
                 404
             );
         }
-
-        try {
-            User::find($request->user_id)->firstOrFail();
-        } catch (\Throwable $th) {
+        
+        if(!$room->members->contains(auth()->user())){
             return response()->json(
-                ['error', 'کاربری با این مشخصات وجود ندارد.'],
+                ['error'=> 'کاربری با این مشخصات وجود ندارد.'],
                 404
             );
         }
+        
 
         Message::create([
             'message' => $request->message,
-            'user_id' => $request->user_id,
+            'user_id' => auth()->user()->id,
             'room_id' => $request->room_id,
         ]);
 

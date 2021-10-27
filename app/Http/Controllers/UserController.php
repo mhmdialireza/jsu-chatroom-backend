@@ -33,14 +33,14 @@ class UserController extends Controller
 
     public function destroy(int $id)
     {
-        if (auth()->user()->is_admin != 1) {
-            return response()->json(['error', 'اجازه دسترسی وجود ندارد'], 403);
+        if (auth()->user()->role_in_site != 'admin') {
+            return response()->json(['error'=> 'اجازه دسترسی وجود ندارد'], 403);
         }
 
         try {
             $user = User::find($id)->firstOrFail();
             $user->delete();
-            return response()->json(['success', 'کاربر با موفقیت حذف شد.']);
+            return response()->json(['success'=> 'کاربر با موفقیت حذف شد.']);
         } catch (\Throwable $th) {
             return 'کاربری با این مشخصات وجود ندارد';
         }
@@ -49,13 +49,13 @@ class UserController extends Controller
     public function destroyByEmail(string $email)
     {
         if (auth()->user()->is_admin != 1) {
-            return response()->json(['error', 'اجازه دسترسی وجود ندارد'], 403);
+            return response()->json(['error'=> 'اجازه دسترسی وجود ندارد'], 403);
         }
 
         try {
             $user = User::where('email', $email)->firstOrFail();
             $user->delete();
-            return response()->json(['success', 'کاربر با موفقیت حذف شد.']);
+            return response()->json(['success'=> 'کاربر با موفقیت حذف شد.']);
         } catch (\Throwable $th) {
             return 'کاربری با این مشخصات وجود ندارد';
         }
