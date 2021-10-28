@@ -12,9 +12,10 @@ use App\Models\Room;
 | contains the "web" middleware group. Now create something great!
 |
 */
+use App\Models\User;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return Room::find(1)->members()->first()->withOutTrash();
+    return User::latest()->first();
 });

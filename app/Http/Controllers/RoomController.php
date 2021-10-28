@@ -30,7 +30,6 @@ class RoomController extends Controller
 
     public function userRooms()
     {
-        // return 1;
         $rooms = auth()->user()->rooms()->paginate(10);
         return RoomResource::collection($rooms);
     }

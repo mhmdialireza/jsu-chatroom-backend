@@ -37,8 +37,7 @@ class RoomResource extends JsonResource
             'access' => $this->access,
             'number_of_members' => $this->number_of_members,
             'created_at' => $date,
-            // 'members' =>  UserResource::collection($this->members),
-            'last_message' => $this->messages()->lastest()->first(),
+            'last_message' => $this->messages()->latest()->first(),
         ];
     }
 }
