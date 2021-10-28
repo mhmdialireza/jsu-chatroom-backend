@@ -14,14 +14,12 @@ use Illuminate\Support\Facades\Validator;
 
 class RoomController extends Controller
 {
-    private $currentUser = auth()->user();
-
     public function index(Request $request)
     {
         $allRooms = Room::all();
 
         $customRooms = $allRooms->filter(function ($value) {
-            $userRooms = $this->currentUser->rooms;
+            $userRooms = auth()->user()->rooms;
             return !$userRooms->contains($value);
         });
 
@@ -32,7 +30,8 @@ class RoomController extends Controller
 
     public function userRooms()
     {
-        $rooms = $this->currentUser->rooms()->paginate(10);
+        // return 1;
+        $rooms = auth()->user()->rooms()->paginate(10);
         return RoomResource::collection($rooms);
     }
 
@@ -66,7 +65,7 @@ class RoomController extends Controller
             ]);
             $room
                 ->members()
-                ->attach($this->currentUser, ['role_in_room' => 'owner']);
+                ->attach(auth()->user(), ['role_in_room' => 'owner']);
 
             return response()->json(
                 ['success' => 'اتاق جدید با موفقیت ایجاد شد.', 'key' => $key],
@@ -81,7 +80,7 @@ class RoomController extends Controller
 
             $room
                 ->members()
-                ->attach($this->currentUser, ['role_in_room' => 'owner']);
+                ->attach(auth()->user(), ['role_in_room' => 'owner']);
 
             return response()->json(
                 ['success' => 'اتاق جدید با موفقیت ایجاد شد.'],
@@ -107,7 +106,7 @@ class RoomController extends Controller
             ]);
         }
 
-        if ($room->members->contains($this->currentUser)) {
+        if ($room->members->contains(auth()->user())) {
             return response()->json([
                 'error' =>
                     'شما جز اعضای گروه هستید ، نمی‌توانید مجدد عضو شوید.',
@@ -130,7 +129,7 @@ class RoomController extends Controller
 
         $room
             ->members()
-            ->attach($this->currentUser, ['role_in_room' => 'member']);
+            ->attach(auth()->user(), ['role_in_room' => 'member']);
         $room->increment('number_of_members');
         return response()->json([
             'error' => 'با موفقیت در گروه عضو شدید.',
@@ -148,13 +147,13 @@ class RoomController extends Controller
             );
         }
 
-        if (!$room->members->contains($this->currentUser)) {
+        if (!$room->members->contains(auth()->user())) {
             return response()->json([
                 'error' => 'شما جز اعضای گروه نیستید.',
             ]);
         }
 
-        $room->members()->detach($this->currentUser);
+        $room->members()->detach(auth()->user());
         $room->decrement('number_of_members');
 
         return response()->json(['success' => 'با موفقیت از گروه خارج شدید.']);
@@ -175,7 +174,7 @@ class RoomController extends Controller
             return response()->json(['error' => 'این گروه عمومی است.']);
         }
 
-        if ($this->currentUser->id != $room->members()->first()->id) {
+        if (auth()->user()->id != $room->members()->first()->id) {
             return response()->json(
                 ['error' => 'اجازه دسترسی وجود ندارد'],
                 403
@@ -247,7 +246,7 @@ class RoomController extends Controller
             );
         }
 
-        if ($this->currentUser->id != $room->members()->first()->id) {
+        if (auth()->user()->id != $room->members()->first()->id) {
             return response()->json(
                 ['error' => 'اجازه دسترسی وجود ندارد'],
                 403
@@ -308,7 +307,7 @@ class RoomController extends Controller
             );
         }
 
-        if ($this->currentUser->id != $room->members()->first()->id) {
+        if (auth()->user()->id != $room->members()->first()->id) {
             return response()->json(
                 ['error' => 'اجازه دسترسی وجود ندارد'],
                 403
@@ -343,14 +342,14 @@ class RoomController extends Controller
             );
         }
 
-        if ($this->currentUser->id == $userId) {
+        if (auth()->user()->id == $userId) {
             return response()->json(
                 ['error' => 'شما نمیتوانید خودتان را حذف کنید.'],
                 400
             );
         }
 
-        if ($this->currentUser->id != $room->members()->first()->id) {
+        if (auth()->user()->id != $room->members()->first()->id) {
             return response()->json(
                 ['error' => 'اجازه دسترسی وجود ندارد'],
                 403

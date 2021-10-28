@@ -41,13 +41,13 @@ class Handler extends ExceptionHandler
         });
     }
 
-    public function render($request, Throwable $e)
-    {
-        if ($e->getMessage() == 'Unauthenticated.') {
-            return response()->json(['error' => "ابتدا وارد سایت شوید."], 403);
-        }else if($e instanceof MethodNotAllowedHttpException){
-            return response()->json(['error' => "متد درخواست اشتباه است."], 405);
-        }
-        return response()->json(['error' => $e->getMessage()]);
-    }
+    // public function render($request, Throwable $e)
+    // {
+    //     if ($e->getMessage() == 'Unauthenticated.') {
+    //         return response()->json(['error' => "ابتدا وارد سایت شوید."], 403);
+    //     }else if($e instanceof MethodNotAllowedHttpException){
+    //         return response()->json(['error' => "متد درخواست اشتباه است."], 405);
+    //     }
+    //     return response()->json(['error' => $e->getMessage()]);
+    // }
 }
