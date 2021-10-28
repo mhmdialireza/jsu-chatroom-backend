@@ -37,7 +37,7 @@ class RoomResource extends JsonResource
             'access' => $this->access,
             'number_of_members' => $this->number_of_members,
             'created_at' => $date,
-            'last_message' => $this->messages()->latest()->first(),
+            'last_message' => new MessageResource($this->messages()->latest()->first()),
         ];
     }
 }
