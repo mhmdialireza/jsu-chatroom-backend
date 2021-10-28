@@ -22,6 +22,7 @@ class MessageResource extends JsonResource
             'id' => $this->id,
             'text' => $this->message,
             'user_name' => (new UserResource(User::find($this->user_id)))->name,
+            'user_id' => $this->user_id,
             'room_id' => $this->room_id,
             'created_at' => $date,
         ];
