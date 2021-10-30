@@ -1,10 +1,11 @@
 <?php
 
+use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
-use App\Http\Controllers\MessageController;
 use App\Http\Controllers\RoomController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\MessageController;
 
 /*
 |--------------------------------------------------------------------------
@@ -64,3 +65,5 @@ Route::middleware('auth:sanctum')
         Route::get('/room/{id}', [MessageController::class, 'index']);
         Route::post('/room', [MessageController::class, 'store']);
     });
+
+Route::get('key', fn() => Str::random(16));
