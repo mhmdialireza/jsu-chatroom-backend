@@ -34,6 +34,7 @@ class MessageResource extends JsonResource
             'room_name' => Room::find($this->room_id)->name,
             'room_id' => $this->room_id,
             'created_at' => $date,
+            'type' => $this->type,
         ];
     }
 }
