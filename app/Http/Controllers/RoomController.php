@@ -48,7 +48,7 @@ class RoomController extends Controller
             ],
             'access' => ['required', Rule::in(['private', 'public'])],
             'description' => 'max:512|min:3',
-            'key' => 'min:6|max:32|confirmed',
+            'key' => 'required|min:6|max:32',
         ]);
 
         if ($validator->fails()) {
