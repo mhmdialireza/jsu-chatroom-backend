@@ -3,12 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\Room;
-use App\Models\User;
 use App\Models\Message;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use App\Http\Resources\RoomResource;
-use App\Http\Resources\UserResource;
 use Hekmatinasser\Verta\Facades\Verta;
 use App\Http\Resources\MessageResource;
 use Illuminate\Database\Eloquent\Collection;
@@ -68,11 +65,27 @@ class MessageController extends Controller
                 404
             );
         }
+        // return Message::where('room_id', $request->room_id)->latest()->first();
+        // return Carbon::instance(Message::where('room_id', $request->room_id)->latest()->first()->created_at)->isToday();
+        if (
+            !count(Message::where('room_id', $request->room_id)->get()) ||
+            !Carbon::instance(Message::where('room_id', $request->room_id)->latest()->first()->created_at)->isToday()
+        ) {
+            $x = Message::create([
+                'message' => Carbon::instance(now())->toDateString(),
+                'user_id' => $room->members()->first()->id,
+                'room_id' => $request->room_id,
+                'type' => 'time'
+            ]);
+            $x->type = "time";
+            $x->save();
+        }
 
         Message::create([
             'message' => $request->message,
             'user_id' => auth()->user()->id,
             'room_id' => $request->room_id,
+            'type' => 'normal',
         ]);
 
         return response()->json(['success' => 'پیام با موفقیت ثبت شد.'], 201);
@@ -125,21 +138,21 @@ class MessageController extends Controller
         for ($i = 0; $i < $diffDays; $i++) {
             if ($i == $diffDays - 1) {
                 $customDates->add([
-                   Carbon::Parse($startDateStringEnd)
-                            ->addDays($i)
-                            ->addSeconds(1)
-                   ->toDateTimeString(),
+                    Carbon::Parse($startDateStringEnd)
+                        ->addDays($i)
+                        ->addSeconds(1)
+                        ->toDateTimeString(),
                     $endDateString,
                 ]);
                 break;
             }
             $customDates->add([
-                 Carbon::parse($startDateStringEnd)
-                        ->addSecond()
-                        ->addDays($i)
-                ->toDateTimeString(),
+                Carbon::parse($startDateStringEnd)
+                    ->addSecond()
+                    ->addDays($i)
+                    ->toDateTimeString(),
                 Carbon::parse($startDateStringEnd)->addDays($i + 1)
-                ->toDateTimeString(),
+                    ->toDateTimeString(),
             ]);
         }
 
@@ -203,7 +216,7 @@ class MessageController extends Controller
 
         $startDateString = "$startArray[0]-$startArray[1]-$startArray[2] $startArray[3]:$startArray[4]:$startArray[5]";
         $endDateString = "$endArray[0]-$endArray[1]-$endArray[2] $endArray[3]:$endArray[4]:$endArray[5]";
-        
+
         $roomNames = Room::pluck('name')->toArray();
 
         $messages = Message::whereBetween('created_at', [$startDateString, $endDateString])->get();
@@ -214,7 +227,7 @@ class MessageController extends Controller
         }
         // dd($allRoomNames);
         $ratings = null;
-        
+
         for ($i = 0; $i < count($roomNames ?? []); $i++) {
             $counter = 0;
             for ($j = 0; $j < count($allRoomNames); $j++) {
@@ -224,7 +237,7 @@ class MessageController extends Controller
             }
             $ratings[$roomNames[$i]] = ($counter / count($messages)) * 100;
         }
-        
+
         return $ratings;
     }
 }

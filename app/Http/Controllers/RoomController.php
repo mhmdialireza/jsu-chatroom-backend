@@ -2,8 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
 use App\Models\Room;
 use App\Models\User;
+use App\Models\Message;
 use Illuminate\Support\Str;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
@@ -48,7 +50,6 @@ class RoomController extends Controller
             ],
             'access' => ['required', Rule::in(['private', 'public'])],
             'description' => 'max:512|min:3',
-            'key' => 'required|min:6|max:32',
         ]);
 
         if ($validator->fails()) {
@@ -56,6 +57,18 @@ class RoomController extends Controller
                 ['error' => $validator->getMessageBag()],
                 400
             );
+        }
+
+        if($request->access == 'private'){
+            $validator = Validator::make($request->all(), [
+                'key' => 'required|min:6|max:32',
+            ]);
+            if ($validator->fails()) {
+                return response()->json(
+                    ['error' => $validator->getMessageBag()],
+                    400
+                );
+            }
         }
 
         $room = Room::create([
@@ -125,6 +138,15 @@ class RoomController extends Controller
             }
         }
 
+        $x = Message::create([
+            'message' => 'وارد گروه شد '.auth()->user()->name,
+            'user_id' => auth()->user()->id,
+            'room_id' => $room->id,
+            'type' => 'jlk'
+        ]);
+        $x->type = "jlk";
+        $x->save();
+
         $room->members()->attach(auth()->user(), ['role_in_room' => 'member']);
         $room->increment('number_of_members');
         return response()->json([
@@ -148,6 +170,15 @@ class RoomController extends Controller
                 'error' => 'شما جز اعضای گروه نیستید.',
             ]);
         }
+
+        $x = Message::create([
+            'message' => 'از گروه خارج شد '.auth()->user()->name,
+            'user_id' => auth()->user()->id,
+            'room_id' => $room->id,
+            'type' => 'jlk'
+        ]);
+        $x->type = "jlk";
+        $x->save();
 
         $room->members()->detach(auth()->user());
         $room->decrement('number_of_members');
@@ -354,6 +385,15 @@ class RoomController extends Controller
                 403
             );
         }
+        $x = Message::create([
+            'message' => 'از گروه اخراج شد '.auth()->user()->name,
+            'user_id' => auth()->user()->id,
+            'room_id' => $roomId,
+            'type' => 'jlk'
+        ]);
+        $x->type = "jlk";
+        $x->save();
+
         $room->members()->detach($user);
 
         return response()->json(
