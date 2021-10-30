@@ -61,7 +61,7 @@ class RoomController extends Controller
         if ($request->access == 'private') {
             if ($request->auto_generate == 1) {
                 $validator = Validator::make($request->all(), [
-                    'key' => 'required|min:6|max:32|confirmed',
+                    'key' => 'min:6|max:32|confirmed',
                 ]);
 
                 if ($validator->fails()) {
