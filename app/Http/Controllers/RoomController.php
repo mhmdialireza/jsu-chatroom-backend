@@ -30,7 +30,10 @@ class RoomController extends Controller
 
     public function userRooms()
     {
-        $rooms = auth()->user()->rooms()->paginate(10);
+        $rooms = auth()
+            ->user()
+            ->rooms()
+            ->paginate(10);
         return RoomResource::collection($rooms);
     }
 
@@ -45,6 +48,7 @@ class RoomController extends Controller
             ],
             'access' => ['required', Rule::in(['private', 'public'])],
             'description' => 'max:512|min:3',
+            'auto_generate' => 'required',
         ]);
 
         if ($validator->fails()) {
@@ -55,21 +59,53 @@ class RoomController extends Controller
         }
 
         if ($request->access == 'private') {
-            $key = Str::random(16);
-            $room = Room::create([
-                'name' => $request->name,
-                'description' => $request->description,
-                'access' => 'private',
-                'key' => Hash::make($key),
-            ]);
-            $room
-                ->members()
-                ->attach(auth()->user(), ['role_in_room' => 'owner']);
+            if ($request->auto_generate == 1) {
+                $validator = Validator::make($request->all(), [
+                    'key' => 'required|min:6|max:32|confirmed',
+                ]);
 
-            return response()->json(
-                ['success' => 'اتاق جدید با موفقیت ایجاد شد.', 'key' => $key],
-                201
-            );
+                if ($validator->fails()) {
+                    return response()->json(
+                        ['error' => $validator->getMessageBag()],
+                        400
+                    );
+                }
+                $room = Room::create([
+                    'name' => $request->name,
+                    'description' => $request->description,
+                    'access' => 'private',
+                    'key' => Hash::make($request->key),
+                ]);
+                $room
+                    ->members()
+                    ->attach(auth()->user(), ['role_in_room' => 'owner']);
+
+                return response()->json(
+                    [
+                        'success' => 'اتاق جدید با موفقیت ایجاد شد.',
+                    ],
+                    201
+                );
+            } else {
+                $key = Str::random(16);
+                $room = Room::create([
+                    'name' => $request->name,
+                    'description' => $request->description,
+                    'access' => 'private',
+                    'key' => Hash::make($key),
+                ]);
+                $room
+                    ->members()
+                    ->attach(auth()->user(), ['role_in_room' => 'owner']);
+
+                return response()->json(
+                    [
+                        'success' => 'اتاق جدید با موفقیت ایجاد شد.',
+                        'key' => $key,
+                    ],
+                    201
+                );
+            }
         } else {
             $room = Room::create([
                 'name' => $request->name,
@@ -100,35 +136,46 @@ class RoomController extends Controller
         }
 
         if ($room->members->count() == 50) {
-            return response()->json([
-                'error' => 'تعداد اعضای گروه به حداکثر میزان خود رسیده است.',
-            ]);
+            return response()->json(
+                [
+                    'error' =>
+                        'تعداد اعضای گروه به حداکثر میزان خود رسیده است.',
+                ],
+                400
+            );
         }
 
         if ($room->members->contains(auth()->user())) {
-            return response()->json([
-                'error' =>
-                    'شما جز اعضای گروه هستید ، نمی‌توانید مجدد عضو شوید.',
-            ]);
+            return response()->json(
+                [
+                    'error' =>
+                        'شما جز اعضای گروه هستید ، نمی‌توانید مجدد عضو شوید.',
+                ],
+                400
+            );
         }
 
         if ($room->access == 'private') {
             if (!isset($request->key)) {
-                return response()->json([
-                    'error' => 'این گروه خصوصی است و نیاز به کلید دارد.',
-                ]);
+                return response()->json(
+                    [
+                        'error' => 'کلید الزامی است.',
+                    ],
+                    400
+                );
             }
             if (!Hash::check($request->key, $room->key)) {
-                return response()->json([
-                    'error' =>
-                        'کلید وارد شده با کلید ثبت شده برای گروه تطابق ندارد.',
-                ]);
+                return response()->json(
+                    [
+                        'error' =>
+                            'کلید وارد شده با کلید ثبت شده برای گروه تطابق ندارد.',
+                    ],
+                    401
+                );
             }
         }
 
-        $room
-            ->members()
-            ->attach(auth()->user(), ['role_in_room' => 'member']);
+        $room->members()->attach(auth()->user(), ['role_in_room' => 'member']);
         $room->increment('number_of_members');
         return response()->json([
             'error' => 'با موفقیت در گروه عضو شدید.',
@@ -175,7 +222,7 @@ class RoomController extends Controller
 
         if (auth()->user()->id != $room->members()->first()->id) {
             return response()->json(
-                ['error' => 'اجازه دسترسی وجود ندارد'],
+                ['error' => 'اجازه دسترسی وجود ندارد.'],
                 403
             );
         }
@@ -185,16 +232,13 @@ class RoomController extends Controller
         ]);
 
         if (!Hash::check($request->key, $room->key)) {
-            return response()->json(
-                ['کلید وارده شده با کلید اصلی تطابق ندارد.'],
-                403
-            );
+            return response()->json(['کلید تطابق ندارد.'], 403);
         }
 
         if ($request->auto_generate && $request->auto_generate == 1) {
             $room->update(['key' => Hash::make($key = Str::random(16))]);
             return response()->json([
-                'success' => 'کلید با موفقیت ریست شد.',
+                'success' => 'کلید با موفقیت بروزرسانی شد.',
                 'key' => $key,
             ]);
         }
@@ -247,7 +291,7 @@ class RoomController extends Controller
 
         if (auth()->user()->id != $room->members()->first()->id) {
             return response()->json(
-                ['error' => 'اجازه دسترسی وجود ندارد'],
+                ['error' => 'اجازه دسترسی وجود ندارد.'],
                 403
             );
         }
@@ -268,6 +312,23 @@ class RoomController extends Controller
                 ['error' => $validator->getMessageBag()],
                 400
             );
+        }
+
+        if ($room->access == 'private') {
+            $validator = Validator::make($request->all(), [
+                'key' => 'required',
+            ]);
+
+            if ($validator->fails()) {
+                return response()->json(
+                    ['error' => $validator->getMessageBag()],
+                    400
+                );
+            }
+
+            if (!Hash::check($request->key, $room->key)) {
+                return 'no';
+            }
         }
 
         if ($request->access == $room->access) {
@@ -305,7 +366,7 @@ class RoomController extends Controller
                 404
             );
         }
-
+        //TODO key check
         if (auth()->user()->id != $room->members()->first()->id) {
             return response()->json(
                 ['error' => 'اجازه دسترسی وجود ندارد'],

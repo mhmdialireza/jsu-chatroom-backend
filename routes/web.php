@@ -1,21 +1,18 @@
 <?php
 
+use App\Http\Controllers\MessageController;
 use App\Models\Room;
-
-/*
-|--------------------------------------------------------------------------
-| Web Routes
-|--------------------------------------------------------------------------
-|
-| Here is where you can register web routes for your application. These
-| routes are loaded by the RouteServiceProvider within a group which
-| contains the "web" middleware group. Now create something great!
-|
-*/
 use App\Models\User;
+use Hekmatinasser\Verta\Facades\Verta;
 use Illuminate\Support\Str;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Route;
-
-Route::get('/', function () {
-    return User::latest()->first();
+// 1635352926
+Route::get('/{x}', function ($x) {
+    return Verta::parse("2021-8-9");
 });
+
+
+Route::get('/{start}/{end}',[MessageController::class,'getAllMessageInPeriodOfTime']);
+Route::get('/{start}/{end}',[MessageController::class,'cakeChart']);
+// 2021-10-27 20:12:06
