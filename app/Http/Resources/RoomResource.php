@@ -35,6 +35,7 @@ class RoomResource extends JsonResource
             'created_at' => $date,
             'last_message' => new MessageResource(
                 $this->messages()
+                    ->whereNotIn('type', ['time'])
                     ->latest()
                     ->first()
             ),

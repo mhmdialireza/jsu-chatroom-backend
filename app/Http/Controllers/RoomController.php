@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use Carbon\Carbon;
 use App\Models\Room;
 use App\Models\User;
 use App\Models\Message;
@@ -11,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Http\Resources\RoomResource;
 use App\Http\Resources\UserResource;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
@@ -35,7 +35,7 @@ class RoomController extends Controller
         $rooms = auth()
             ->user()
             ->rooms()
-            ->paginate(10);
+            ->paginate(20);
         return RoomResource::collection($rooms);
     }
 
@@ -59,7 +59,7 @@ class RoomController extends Controller
             );
         }
 
-        if($request->access == 'private'){
+        if ($request->access == 'private') {
             $validator = Validator::make($request->all(), [
                 'key' => 'required|min:6|max:32',
             ]);
@@ -102,7 +102,7 @@ class RoomController extends Controller
             return response()->json(
                 [
                     'error' =>
-                    'تعداد اعضای گروه به حداکثر میزان خود رسیده است.',
+                        'تعداد اعضای گروه به حداکثر میزان خود رسیده است.',
                 ],
                 400
             );
@@ -112,7 +112,7 @@ class RoomController extends Controller
             return response()->json(
                 [
                     'error' =>
-                    'شما جز اعضای گروه هستید ، نمی‌توانید مجدد عضو شوید.',
+                        'شما جز اعضای گروه هستید ، نمی‌توانید مجدد عضو شوید.',
                 ],
                 400
             );
@@ -130,8 +130,7 @@ class RoomController extends Controller
             if (!Hash::check($request->key, $room->key)) {
                 return response()->json(
                     [
-                        'error' =>
-                        'کلید وارد شده با کلید ثبت شده برای گروه تطابق ندارد.',
+                        'error' => 'کلید تطابق ندارد.',
                     ],
                     401
                 );
@@ -139,12 +138,12 @@ class RoomController extends Controller
         }
 
         $x = Message::create([
-            'message' => 'وارد گروه شد '.auth()->user()->name,
+            'message' => 'وارد گروه شد ' . auth()->user()->name,
             'user_id' => auth()->user()->id,
             'room_id' => $room->id,
-            'type' => 'jlk'
+            'type' => 'jlk',
         ]);
-        $x->type = "jlk";
+        $x->type = 'jlk';
         $x->save();
 
         $room->members()->attach(auth()->user(), ['role_in_room' => 'member']);
@@ -166,18 +165,21 @@ class RoomController extends Controller
         }
 
         if (!$room->members->contains(auth()->user())) {
-            return response()->json([
-                'error' => 'شما جز اعضای گروه نیستید.',
-            ]);
+            return response()->json(
+                [
+                    'error' => 'شما جز اعضای گروه نیستید.',
+                ],
+                403
+            );
         }
 
         $x = Message::create([
-            'message' => 'از گروه خارج شد '.auth()->user()->name,
+            'message' => 'از گروه خارج شد ' . auth()->user()->name,
             'user_id' => auth()->user()->id,
             'room_id' => $room->id,
-            'type' => 'jlk'
+            'type' => 'jlk',
         ]);
-        $x->type = "jlk";
+        $x->type = 'jlk';
         $x->save();
 
         $room->members()->detach(auth()->user());
@@ -198,7 +200,7 @@ class RoomController extends Controller
         }
 
         if ($room->access != 'private') {
-            return response()->json(['error' => 'این گروه عمومی است.'],400);
+            return response()->json(['error' => 'این گروه عمومی است.'], 400);
         }
 
         if (auth()->user()->id != $room->members()->first()->id) {
@@ -213,10 +215,6 @@ class RoomController extends Controller
             'new-key' => 'required|min:6|max:32',
         ]);
 
-        if (!Hash::check($request->key, $room->key)) {
-            return response()->json(['کلید تطابق ندارد.'], 403);
-        }
-
         if ($validator->fails()) {
             return response()->json(
                 ['error' => $validator->getMessageBag()],
@@ -224,11 +222,18 @@ class RoomController extends Controller
             );
         }
 
+        if (!Hash::check($request->key, $room->key)) {
+            return response()->json(['کلید تطابق ندارد.'], 403);
+        }
+
         $room->update(['key' => Hash::make($request->newKey)]);
 
-        return response()->json([
-            'success' => 'کلید با موفقیت ریست شد.',
-        ]);
+        return response()->json(
+            [
+                'success' => 'کلید با موفقیت ریست شد.',
+            ],
+            201
+        );
     }
 
     public function show(string $name)
@@ -246,6 +251,28 @@ class RoomController extends Controller
                 404
             );
         }
+    }
+
+    public function search(string $name)
+    {
+        $rooms = Room::where('name', 'LIKE', $name . '%')
+            ->withoutTrashed()
+            ->get();
+
+        $finalRooms = new Collection();
+        foreach ($rooms as &$room) {
+            if ($room->members->contains(auth()->user())) {
+                $room->is_join = 1;
+            } else {
+                $room->is_join = 0;
+            }
+            $finalRooms->add([
+                'name' => $room->name,
+                'access' => $room->access,
+                'is_join' => $room->is_join,
+            ]);
+        }
+        return response()->json(['rooms' => $finalRooms]);
     }
 
     public function update(Request $request, $id)
@@ -284,7 +311,70 @@ class RoomController extends Controller
             );
         }
 
-        if ($room->access == 'private') {
+        if ($request->access == $room->access) {
+            $room->update([
+                'name' => $request->name,
+                'description' => $request->description,
+            ]);
+            return response()->json(['room' => $room], 202);
+        } elseif ($request->access == 'public') {
+            $validator = Validator::make($request->all(), [
+                'key' => 'required',
+            ]);
+            if ($validator->fails()) {
+                return response()->json(
+                    ['error' => $validator->getMessageBag()],
+                    400
+                );
+            }
+
+            if (!Hash::check($request->key, $room->key)) {
+                return response()->json(['error' => 'کلید اشتباه است.'], 403);
+            }
+
+            $room->update([
+                'name' => $request->name,
+                'description' => $request->description,
+                'access' => 'public',
+                'key' => null,
+            ]);
+            return response()->json(['room' => $room], 202);
+        } else {
+            $validator = Validator::make($request->all(), [
+                'key' => 'required',
+            ]);
+            if ($validator->fails()) {
+                return response()->json(
+                    ['error' => $validator->getMessageBag()],
+                    400
+                );
+            }
+
+            if (!Hash::check($request->key, $room->key)) {
+                return response()->json(['error' => 'کلید اشتباه است.'], 403);
+            }
+            $room->update([
+                'name' => $request->name,
+                'description' => $request->description,
+                'access' => 'private',
+                'key' => Hash::make($request->key),
+            ]);
+            return response()->json(['room' => $room], 202);
+        }
+    }
+
+    public function destroy(Request $request, $id)
+    {
+        try {
+            $room = Room::whereId($id)->firstOrFail();
+        } catch (\Throwable $th) {
+            return response()->json(
+                ['error' => 'اتاقی با این مشخصات وجود ندارد'],
+                404
+            );
+        }
+
+        if ($room->access = 'private') {
             $validator = Validator::make($request->all(), [
                 'key' => 'required',
             ]);
@@ -297,46 +387,10 @@ class RoomController extends Controller
             }
 
             if (!Hash::check($request->key, $room->key)) {
-                return 'no';
+                return response()->json(['error' => 'کلید اشتباه است.'], 403);
             }
         }
 
-        if ($request->access == $room->access) {
-            $room->update([
-                'name' => $request->name,
-                'description' => $request->description,
-            ]);
-        } elseif ($request->access == 'public') {
-            $room->update([
-                'name' => $request->name,
-                'description' => $request->description,
-                'access' => 'public',
-                'key' => null,
-            ]);
-        } else {
-            $room->update([
-                'name' => $request->name,
-                'description' => $request->description,
-                'access' => 'private',
-                'key' => Hash::make($newKey = Str::random(16)),
-            ]);
-            return response()->json(['room' => $room, 'key' => $newKey]);
-        }
-
-        return response()->json(['room' => $room]);
-    }
-
-    public function destroy($id)
-    {
-        try {
-            $room = Room::whereId($id)->firstOrFail();
-        } catch (\Throwable $th) {
-            return response()->json(
-                ['error' => 'اتاقی با این مشخصات وجود ندارد'],
-                404
-            );
-        }
-        //TODO key check
         if (auth()->user()->id != $room->members()->first()->id) {
             return response()->json(
                 ['error' => 'اجازه دسترسی وجود ندارد'],
@@ -386,12 +440,12 @@ class RoomController extends Controller
             );
         }
         $x = Message::create([
-            'message' => 'از گروه اخراج شد '.auth()->user()->name,
+            'message' => 'از گروه اخراج شد ' . auth()->user()->name,
             'user_id' => auth()->user()->id,
             'room_id' => $roomId,
-            'type' => 'jlk'
+            'type' => 'jlk',
         ]);
-        $x->type = "jlk";
+        $x->type = 'jlk';
         $x->save();
 
         $room->members()->detach($user);

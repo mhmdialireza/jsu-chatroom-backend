@@ -23,7 +23,6 @@ class UserResource extends JsonResource
             'email' => $this->email,
             'role_in_site' => $this->role_in_site,
             'created_at' => $date,
-            'created' => $date,
             'role_in_room' => $this->pivot->role_in_room ?? null,
         ];
     }

@@ -1,372 +1,359 @@
-# **Chatroom API**
-  _this is a simple api for internship last test. <br>
-  domain for all http verbs: localhost:8000/api_
-  -
+# **<div dir='rtl' align='center'>API چت روم</div>**
+<div dir='rtl'>
+  پروژه نهایی کارآموزی یک api است که طبق مستندات قابل استفاده است.<br>
+  برای استفاده local می‌توان از http://localhost:8000/api بجای دامنه اصلی سایت استفاده کرد.<br>
+  دقت داشته باشید تاریخ های دریافتی ازین api تماما شمسی هستند و برای دریافت پاسخ درست از سرور ، درخواست های شماهم باید در قابل تاریخ شمسی باشند.<br>
 <hr>
 
-## **Authentication**
+## **احراز هویت**
 
-### **Register**
+### **ثبت نام**
 
-  * **URL**
+  * **آدرس**
 
     _/register_
 
-  * **Method:**
+  * **متد:**
 
     `POST`
-  
-  * **URL Params**
 
-    None 
-
-  * **Dody Params**
+  * **پارامتر های بدنه درخواست**
 
     _name_ <br>
     _email_ <br>
     _password_ <br>
     _password_confirmation_ <br>
 
-### **Login**
-  * **URL**
+### **ورود**
+  * **آدرس**
   
     _/login_
 
-  * **Method:**
+  * **متد:**
 
     `POST`
-  
-  * **URL Params**
-
-    None
-
-  * **Dody Params**
+  * **پارامترهای بدنه‌ی درخواست**
 
     _email_ <br>
+    _password_
 
-### **Logout**
+### **خروج**
 
-<_you can use this for logout (it needs auth token)._>
+<_این آدرس نیاز به توکن احراز هویت نیاز دارد._>
 
-* **URL**
+* **آدرس**
 
   _/logout_
 
-* **Method:**
+* **متد:**
 
   `POST`
 
-* **URL Params**
-
-  None
-
-* **Dody Params**
-
-  _password_ <br>
-
 ---
 
-## **Users**
+## **کاربران**
 
-### **Get all users**
+### **دریافت اطلاعات کاربران**
 
-<_you can get all the chatroom users (it needs auth token and you should be admin)._>
+<_.این آدرس برای دریافت اطلاعات تمامی کاربران سایت است و علاوه بر توکن احراز هویت نیاز است که درخواست دهنده ، مدیر سایت نیز باشد_>
 
-* **URL**
+* **آدرس**
 
     _/users_
 
-* **Method:**
+* **متد:**
 
   `GET`
+### **اخراج کاربر**
 
-* **URL Params**
-
-  None
-
-* **Dody Params**
-
-  None
-
-### **Delete one user**
-
-<_you can get all the chatroom users (it needs auth token)._>
-
-* **URL**
+<_این آدرس برای اخراج یک کاربر از کل سایت است و علاوه بر توکن احراز هویت نیاز است که درخواست دهنده ، مدیر سایت نیز باشد_>
+* **آدرس**
 
   _/users/{user_id}_
 
-* **Method:**
-
-  `GET`
-
-* **URL Params**
-
-  None
-
-* **Dody Params**
-
-  None
-
-
-### **Delete a user**
-
-<_you can delete a user form chatroom (it needs auth token and you should be admin)._>
-
-* **URL**
-
-  _/users/delete/{user_id}_
-
-* **Method:**
+* **متد:**
 
   `DELETE`
 
-* **URL Params**
+### **نمودار کیکی شکل**
 
-  None
+<_این آدرس برای دریافت درصد پیام های ارسالی در یک بازه زمانی مشخص ، به نسبت تعداد گروه‌ها است و علاوه بر توکن احراز هویت نیاز است که درخواست دهنده ، مدیر سایت نیز باشد._>
 
-* **Dody Params**
+* **آدرس**
 
-  None
+  _/users/cake/{date1}/{date2}_<br>
+  قالب زمان ارسالی در آدرس ذکر شده دقیقا باید به شکل زیر باشد<br>
+  1400-12-25-13-30-0 => از راست به چپ : ثانیه ، دقیقه ، ساعت ، روز ، ماه و سال هستند <br>
 
+  بدیهی است ، تاریخ اول باید کمتر از تاریخ دوم باشد.
+
+* **متد:**
+
+  `GET`
+
+### **نمودار خطی**
+
+<_این آدرس برای دریافت نمودار خطی پیام های ارسالی در یک بازه زمانی مشخص ، نسبت به تعداد گروه‌ها است و علاوه بر توکن احراز هویت نیاز است که درخواست دهنده ، مدیر سایت نیز باشد._>
+
+* **آدرس**
+
+  _/users/chart/{date1}/{date2}_<br>
+  قالب زمان ارسالی در آدرس ذکر شده دقیقا باید به شکل زیر باشد<br>
+  1400-12-25-13-30-0 => از راست به چپ : ثانیه ، دقیقه ، ساعت ، روز ، ماه و سال هستند <br>
+
+  بدیهی است ، تاریخ اول باید کمتر از تاریخ دوم باشد.
+
+* **متد:**
+
+  `GET`
+
+### **اطلاعات کاربری**
+
+<_این آدرس برای دریافت اطلاعات وارد شده به سایت است تا برای قسمت اطلاعات کاربری نمایش داده شود ، این آدرس نیز نیاز به توکن احراز هویت دارد._>
+
+* **آدرس**
+
+  _/users/profile_
+
+* **متد:**
+
+  `GET`
+
+### **تغییر در اطلاعات کاربری**
+
+<_این آدرس نیاز به توکن احراز هویت دارد._>
+
+* **آدرس**
+
+  _/users/profile_
+
+* **متد:**
+
+  `PUT`
+
+* **پارامترهای بدنه‌ی درخواست**
+
+  _name_ <br>
+  _email_
+
+### **تغییر رمز اکانت**
+
+<_این آدرس نیاز به توکن احراز هویت دارد._>
+
+* **آدرس**
+
+  _/users/profile/change-password_
+
+* **متد:**
+
+  `PUT`
+
+* **پارامترهای بدنه‌ی درخواست**
+
+  _password_ <br>
+  _new_password_ <br>
+  _new_password_confirmation_
 ___
 
-## **Rooms**
+## **گروه ها**
 
-### **Get all rooms**
+### **دریافت لیست تمام گروه‌ها**
 
-<_you can Get all of Rooms that exists in chatroom and login user didn't join (it needs auth token)._>
+<_این آدرس نیاز به توکن احراز هویت دارد._>
 
-* **URL**
+* **آدرس**
 
   _/rooms_
 
-* **Method:**
+* **متد:**
 
   `GET`
 
-* **URL Params**
+### **دریافت گروه‌های یک کاربر**
 
-  None
+<_این آدرس نیاز به توکن احراز هویت دارد._>
 
-* **Dody Params**
-
-  None
-
-### **Get all user's rooms**
-
-<_you can Get all of Rooms that a user join them (it needs auth token)._>
-
-* **URL**
+* **آدرس**
 
   _/rooms/user_
 
-* **Method:**
+* **متد:**
 
   `GET`
 
-* **URL Params**
+### **دریافت اطلاعات کامل یک گروه**
 
-  None
+<_این آدرس نیاز به توکن احراز هویت دارد_>
 
-* **Dody Params**
-
-  None
-
-### **Get a room**
-
-<_you can Get special Rooms information (it needs auth token)._>
-
-* **URL**
+* **آدرس**
 
   _/rooms/{room_name}_
 
-* **Method:**
+* **متد:**
+
+  `GET`
+### **جستوجو میان گروه ها**
+
+<_این آدرس نیاز به توکن احراز هویت دارد_>
+
+* **آدرس**
+
+  _/rooms/{room_name}_
+
+* **متد:**
 
   `GET`
 
-* **URL Params**
+### **ساخت گروه**
 
-  None
+<_این آدرس نیاز به توکن احراز هویت دارد_>
 
-* **Dody Params**
-
-  None
-
-### **Create room**
-
-<_you can create a Room (it needs auth token)._>
-
-  * **URL**
+  * **آدرس**
 
     _/rooms_
 
-  * **Method:**
+  * **متد:**
 
     `POST`
-  
-  * **URL Params**
 
-    None
-
-  * **Dody Params**
+  * **پارامترهای بدنه‌ی درخواست**
 
     _name_ <br>
-    _access (private or public)_ <br>
+    _access (private یا public)_ <br>
     _description_ <br>
 
-### **Join room**
-<_(it needs auth token)._>
-* **URL**
+    در صورت **private** بودن<br>
+    _key_
+
+### **عضو شدن در یک گروه**
+
+<_این آدرس نیاز به توکن احراز هویت دارد_>
+
+* **آدرس**
 
   _/rooms/join_
 
-* **Method:**
+* **متد:**
 
   `PUT`
 
-* **URL Params**
+* **پارامترهای بدنه‌ی درخواست**
 
-  None
+  _name (اسم گروهی که می‌خواهید در آن عضو شوید)_ <br>
 
-* **Dody Params**
+### **خارج شدن از یک گروه**
 
-  _name (name of the room you like to join)_ <br>
+<_این آدرس نیاز به توکن احراز هویت دارد_>
 
-### **Left room**
-
-<_(it needs auth token)._>
-
-* **URL**
+* **آدرس**
 
   _/rooms/left_
 
-  * **Method:**
+  * **متد:**
 
   `PUT`
 
-* **URL Params**
+* **پارامترهای بدنه‌ی درخواست**
 
-  None
+  _name (اسم گروهی که میخواهید از آن خارج شوید)_ <br>
 
-* **Dody Params**
+### **ریست کردن کلید**
 
-  _name (name of the room you like to left)_ <br>
+<_این آدرس نیاز به توکن احراز هویت دارد_>
 
-### **Reset key**
-<_(it needs auth token)._>
-
-* **URL**
+* **آدرس**
 
   _/rooms/reset-key_
 
-* **Method:**
+* **متد:**
 
   `PUT`
 
-* **URL Params**
+* **پارامترهای بدنه‌ی درخواست**
 
-  None
-
-* **Dody Params**
-
-  _name (name of the room you like to reset its key)_ <br>
+  _name (اسم گروه)_ <br>
   _key_ <br>
   _newKey_ <br>
-  _newKey_conformation_ <br>
 
-  **if you want to use _auto generate_, you should this way:**
+### **بروزرسانی گروه**
 
-  _name_ <br>
-  _key_ <br>
-  _auto_generate (boolean)_ <br>
+<_لازم به ذکر است که شما باید تشکیل دهنده گروه باشید و مانند دیگر آدرس ها ، به توکن احراز هویت نیاز است._>
 
-### **Edit room**
-<_(it needs auth token)._>
-
-* **URL**
+* **آدرس**
 
   _/rooms/update/{room_id}_
 
-* **Method:**
+* **متد:**
 
   `PUT`
 
-* **Dody Params**
+* **پارامترهای بدنه‌ی درخواست**
 
+اگر نمیخواهید عمومی یا خصوصی بودن گروه را تغییر دهید :<br>
   _name_ <br>
   _description_ <br>
   _access_ <br>
+  
 
-  **if access is private you should send key**
-  _key_ <br>
+در غیر اینصورت به کلید هم نیاز است :<br>
+  _key_
+### **حذف گروه**
+<_به توکن احراز هویت نیاز است._>
 
-### **Delete room**
-<_(it needs auth token)._>
-
-* **URL**
+* **آدرس**
 
   _/rooms/{room_id}_
 
-* **Method:**
+* **متد:**
 
   `DELETE`
 
-* **Dody Params**
+* **پارامترهای بدنه‌ی درخواست**
 
-  None
+در صورت عمومی بودن گروه نیاز به پارامتر خاصی نیست<br>
+ اما اگر گروه خصوصی باشد نیاز به کلید است :<br>
+_key_
 
-### **Delete member**
-<_(it needs auth token)._>
+### **اخراج یک عضو از گروه**
+<_علاوه بر توکن احراز هویت نیاز است که شما مدیر گروه نیز باشید._>
 
-* **URL**
+* **آدرس**
 
   _/rooms/{room_id}/user/{user_id}_
 
-* **Method:**
+* **متد:**
 
   `DELETE`
 
-* **Dody Params**
-
-  None
-
-## **Message** 
 ___
-### **Get messages of one room**
-<_(it needs auth token)._>
+## **پیام ها** 
+### **دریافت پیام های یک گروه**
 
-  * **URL**
+<_به توکن احرار هویت نیاز است ، همچنین نیاز است که عضو گروه باشید._>
+
+  * **آدرس**
 
     _/messages/room/{room_id}_
 
-  * **Method:**
+  * **متد:**
 
     `Get`
-  
-  * **URL Params**
 
-    None
+### **ارسال پیام**
 
-  * **Dody Params**
-   
-    None
+<_به توکن احرار هویت نیاز است ، همچنین نیاز است که عضو گروه باشید._>
 
-### **Send message**
-<_(it needs auth token)._>
-
-  * **URL**
+  * **آدرس**
 
     _/messages/room_
 
-  * **Method:**
+  * **متد:**
 
-    `Get`
-  
-  * **URL Params**
+    `POST`
 
-    None
-
-  * **Dody Params**
+  * **پارامترهای بدنه‌ی درخواست**
    
     _message_
+    _room_id_
+
+    </div>

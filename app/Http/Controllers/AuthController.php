@@ -16,7 +16,6 @@ class AuthController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|max:16|min:3',
-            'email' => 'required|email|unique:users,email',
             'email' => [
                 'required',
                 'email',
@@ -46,7 +45,7 @@ class AuthController extends Controller
                 'user' => $user,
                 'token' => $token,
             ],
-        ]);
+        ],201);
     }
 
     public function login(Request $request)
@@ -57,7 +56,7 @@ class AuthController extends Controller
         ]);
         
         if ($validator->fails()) {
-            return $validator->getMessageBag();
+            return response()->json($validator->getMessageBag(), 400); 
         }
         
         $user = User::whereEmail($request->email)->first();
@@ -65,11 +64,11 @@ class AuthController extends Controller
         if (!$user) {
             return response()->json([
                 'error' => 'کاربری با این مشخصات وجود ندارد.',
-            ]);
+            ],404);
         }
 
         if (!Hash::check($request->password, $user->password)) {
-            return response()->json(['error' => 'رمزعبور اشتباه است.']);
+            return response()->json(['error' => 'رمزعبور اشتباه است.'],401);
         }
 
         $token = $user->createToken('myApp')->plainTextToken;
