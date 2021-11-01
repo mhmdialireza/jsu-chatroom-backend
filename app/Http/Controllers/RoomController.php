@@ -272,7 +272,7 @@ class RoomController extends Controller
                 'is_join' => $room->is_join,
             ]);
         }
-        return response()->json(['rooms' => $finalRooms]);
+        return response()->json(['rooms' => $finalRooms->paginate(20)]);
     }
 
     public function update(Request $request, $id)
