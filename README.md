@@ -198,7 +198,7 @@ ___
 
 * **آدرس**
 
-  _/rooms/{room_name}_
+  _/rooms/search/{room_name}_
 
 * **متد:**
 
