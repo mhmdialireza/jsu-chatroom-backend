@@ -255,9 +255,7 @@ class RoomController extends Controller
 
     public function search(string $name)
     {
-        $rooms = Room::where('name', 'LIKE', $name . '%')
-            ->withoutTrashed()
-            ->get();
+        $rooms = Room::where('name', 'LIKE', $name . '%')->get();
 
         $finalRooms = new Collection();
         foreach ($rooms as &$room) {
@@ -272,7 +270,10 @@ class RoomController extends Controller
                 'is_join' => $room->is_join,
             ]);
         }
-        return response()->json(['rooms' => $finalRooms->paginate(20)]);
+        dd($finalRooms);
+        $finalRooms2 = $finalRooms->paginate(20);
+        return RoomResource::collection($finalRooms2);
+        return response()->json(['rooms' => $finalRooms]);
     }
 
     public function update(Request $request, $id)
@@ -374,7 +375,7 @@ class RoomController extends Controller
             );
         }
 
-        if ($room->access = 'private') {
+        if ($room->access == 'private') {
             $validator = Validator::make($request->all(), [
                 'key' => 'required',
             ]);
