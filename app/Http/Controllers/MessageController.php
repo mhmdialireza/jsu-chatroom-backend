@@ -20,7 +20,7 @@ class MessageController extends Controller
         } catch (\Throwable $th) {
             return response()->json([
                 'error' => 'اتاقی با این مشخصات وجود ندارد.',
-            ],404);
+            ], 404);
         }
 
         if (!$room->members->contains(auth()->user())) {
@@ -65,10 +65,11 @@ class MessageController extends Controller
                 404
             );
         }
-        
+
         if (
             !count(Message::where('room_id', $request->room_id)->get()) ||
-            !Carbon::instance(Message::where('room_id', $request->room_id)->latest()->first()->created_at)->isToday()
+            !Carbon::instance(Message::where('room_id', $request->room_id)
+                ->latest()->first()->created_at)->isToday()
         ) {
             $x = Message::create([
                 'message' => Carbon::instance(now())->toDateString(),
@@ -95,11 +96,11 @@ class MessageController extends Controller
         $startArray = explode('-', $start);
         $endArray = explode('-', $end);
 
-        if(count($startArray)!=6 ||count($endArray)!=6){
+        if (count($startArray) != 6 || count($endArray) != 6) {
             return response()->json(['error' => 'تاریخ وارد شده معتبر نیست.'], 400);
         }
 
-        if(count($startArray)!=6 ||count($endArray)!=6){
+        if (count($startArray) != 6 || count($endArray) != 6) {
             return response()->json(['error' => 'تاریخ وارد شده معتبر نیست.'], 400);
         }
 
@@ -131,7 +132,7 @@ class MessageController extends Controller
         $endDateString = "$endArray[0]-$endArray[1]-$endArray[2] $endArray[3]:$endArray[4]:$endArray[5]";
         $startDateStringEnd = "$startArray[0]-$startArray[1]-$startArray[2] 23:59:59";
 
-        if(!Carbon::create($endDateString)->greaterThan(Carbon::create($startDateString))){
+        if (!Carbon::create($endDateString)->greaterThan(Carbon::create($startDateString))) {
             return response()->json(['error' => 'تاریخ وارد شده معتبر نیست.'], 400);
         }
 
@@ -184,7 +185,7 @@ class MessageController extends Controller
 
             $finalTime2 = Carbon::instance(Verta::create(...$arrTimeD, ...$arrTimeT))->toDateTimeString();
 
-            $query = Message::where('type' ,'normal')->whereBetween('created_at', [
+            $query = Message::where('type', 'normal')->whereBetween('created_at', [
                 ...$customDate,
             ])->get();
 
@@ -199,14 +200,14 @@ class MessageController extends Controller
         $startArray = explode('-', $start);
         $endArray = explode('-', $end);
 
-        if(count($startArray)!=6 ||count($endArray)!=6){
+        if (count($startArray) != 6 || count($endArray) != 6) {
             return response()->json(['error' => 'تاریخ وارد شده معتبر نیست.'], 400);
         }
 
-        if(count($startArray)!=6 ||count($endArray)!=6){
+        if (count($startArray) != 6 || count($endArray) != 6) {
             return response()->json(['error' => 'تاریخ وارد شده معتبر نیست.'], 400);
         }
-        
+
         if (!Verta::isValidDate($startArray[0], $startArray[1], $startArray[2])) {
             return response()->json(['error' => 'تاریخ وارد شده معتبر نیست.'], 400);
         }
@@ -234,19 +235,19 @@ class MessageController extends Controller
         $startDateString = "$startArray[0]-$startArray[1]-$startArray[2] $startArray[3]:$startArray[4]:$startArray[5]";
         $endDateString = "$endArray[0]-$endArray[1]-$endArray[2] $endArray[3]:$endArray[4]:$endArray[5]";
 
-        if(!Carbon::create($endDateString)->greaterThan(Carbon::create($startDateString))){
+        if (!Carbon::create($endDateString)->greaterThan(Carbon::create($startDateString))) {
             return response()->json(['error' => 'تاریخ وارد شده معتبر نیست.'], 400);
         }
 
         $roomNames = Room::pluck('name')->toArray();
 
-        $messages = Message::where('type' ,'normal')->whereBetween('created_at', [$startDateString, $endDateString])->get();
+        $messages = Message::where('type', 'normal')->whereBetween('created_at', [$startDateString, $endDateString])->get();
 
         $allRoomNames = null;
         foreach ($messages as $m) {
             $allRoomNames[] = Room::find($m->room_id)->name;
         }
-        
+
         if (!count($messages)) {
             return response()->json(['error' => 'پیامی در این تاریخ ارسال نشده است.'], 400);
         }

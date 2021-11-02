@@ -5,12 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Room;
 use App\Models\User;
 use App\Models\Message;
-use Illuminate\Support\Str;
+use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Http\Resources\RoomResource;
 use App\Http\Resources\UserResource;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
@@ -78,40 +77,40 @@ class RoomController extends Controller
         try {
             $room = Room::where('name', $request->name)->firstOrFail();
         } catch (\Throwable $th) {
-            return response()->json(
-                ['error' => 'اتاقی با این مشخصات وجود ندارد'],
-                404
-            );
+            return response()->json(['error' => 'اتاقی با این مشخصات وجود ندارد'], 404);
         }
 
         if ($room->members->count() == 50) {
-            return response()->json(
-                [
-                    'error' =>
-                        'تعداد اعضای گروه به حداکثر میزان خود رسیده است.',
-                ],
-                400
-            );
+            return response()->json(['error' => 'تعداد اعضای گروه به حداکثر میزان خود رسیده است.',], 400);
+        }
+//        return 1;
+        if (
+            !count(Message::where('room_id', $room->room_id)->get()) ||
+            !Carbon::instance(
+                Message::where('room_id', $room->room_id)->latest()->first()->created_at
+            )->isToday()
+        ) {
+            $x = Message::create([
+                'message' => Carbon::instance(now())->toDateString(),
+                'user_id' => $room->members()->first()->id,
+                'room_id' => $room->id,
+                'type' => 'time'
+            ]);
+            $x->type = "time";
+            $x->save();
+        }
+
+        if (count($room->members) == 50) {
+            return response()->json(['error' => 'اعضای گروه کامل است.', 400]);
         }
 
         if ($room->members->contains(auth()->user())) {
-            return response()->json(
-                [
-                    'error' =>
-                        'شما جز اعضای گروه هستید ، نمی‌توانید مجدد عضو شوید.',
-                ],
-                400
-            );
+            return response()->json(['error' => 'نمی‌توانید مجدد عضو شوید.', 400]);
         }
 
         if ($room->access == 'private') {
             if (!isset($request->key)) {
-                return response()->json(
-                    [
-                        'error' => 'کلید الزامی است.',
-                    ],
-                    400
-                );
+                return response()->json(['error' => 'کلید الزامی است.'], 400);
             }
             if (!Hash::check($request->key, $room->key)) {
                 return response()->json(
@@ -122,7 +121,6 @@ class RoomController extends Controller
                 );
             }
         }
-
         $x = Message::create([
             'message' => 'وارد گروه شد ' . auth()->user()->name,
             'user_id' => auth()->user()->id,
@@ -134,9 +132,7 @@ class RoomController extends Controller
 
         $room->members()->attach(auth()->user(), ['role_in_room' => 'member']);
         $room->increment('number_of_members');
-        return response()->json([
-            'error' => 'با موفقیت در گروه عضو شدید.',
-        ]);
+        return response()->json(['error' => 'با موفقیت در گروه عضو شدید.']);
     }
 
     public function left(Request $request)
@@ -150,13 +146,23 @@ class RoomController extends Controller
             );
         }
 
+        if (
+            !count(Message::where('room_id', $room->room_id)->get()) ||
+            !Carbon::instance(Message::where('room_id', $room->room_id)
+                ->latest()->first()->created_at)->isToday()
+        ) {
+            $x = Message::create([
+                'message' => Carbon::instance(now())->toDateString(),
+                'user_id' => $room->members()->first()->id,
+                'room_id' => $room->id,
+                'type' => 'time'
+            ]);
+            $x->type = "time";
+            $x->save();
+        }
+
         if (!$room->members->contains(auth()->user())) {
-            return response()->json(
-                [
-                    'error' => 'شما جز اعضای گروه نیستید.',
-                ],
-                403
-            );
+            return response()->json(['error' => 'شما جز اعضای گروه نیستید.',], 403);
         }
 
         $x = Message::create([
@@ -398,24 +404,30 @@ class RoomController extends Controller
         try {
             $user = User::whereId($userId)->firstOrFail();
         } catch (\Throwable $th) {
-            return response()->json(
-                ['error' => 'کاربری با این مشخصات وجود ندارد.'],
-                404
-            );
+            return response()->json(['error' => 'کاربری با این مشخصات وجود ندارد.'], 404);
         }
 
         if (auth()->user()->id == $userId) {
-            return response()->json(
-                ['error' => 'شما نمیتوانید خودتان را حذف کنید.'],
-                400
-            );
+            return response()->json(['error' => 'شما نمیتوانید خودتان را حذف کنید.'], 400);
+        }
+
+        if (
+            !count(Message::where('room_id', $room->room_id)->get()) ||
+            !Carbon::instance(Message::where('room_id', $room->room_id)
+                ->latest()->first()->created_at)->isToday()
+        ) {
+            $x = Message::create([
+                'message' => Carbon::instance(now())->toDateString(),
+                'user_id' => $room->members()->first()->id,
+                'room_id' => $room->id,
+                'type' => 'time'
+            ]);
+            $x->type = "time";
+            $x->save();
         }
 
         if (auth()->user()->id != $room->members()->first()->id) {
-            return response()->json(
-                ['error' => 'اجازه دسترسی وجود ندارد'],
-                403
-            );
+            return response()->json(['error' => 'اجازه دسترسی وجود ندارد'], 403);
         }
         $x = Message::create([
             'message' => 'از گروه اخراج شد ' . auth()->user()->name,
@@ -428,9 +440,6 @@ class RoomController extends Controller
 
         $room->members()->detach($user);
 
-        return response()->json(
-            ['success' => 'کاربر مورد نظر با موفقیت از گروه حذف شد.'],
-            202
-        );
+        return response()->json(['success' => 'کاربر مورد نظر با موفقیت از گروه حذف شد.'], 202);
     }
 }

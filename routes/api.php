@@ -49,7 +49,7 @@ Route::prefix('rooms')
         Route::get('', [RoomController::class, 'index']);
         Route::get('/user', [RoomController::class, 'userRooms']);
         Route::get('/{name}', [RoomController::class, 'show']);
-        Route::get('search/{name}', [RoomController::class, 'search']);
+        Route::get('search/{name?}', [RoomController::class, 'search']);
         Route::post('/', [RoomController::class, 'store']);
         Route::put('/join', [RoomController::class, 'join']);
         Route::put('/left', [RoomController::class, 'left']);
