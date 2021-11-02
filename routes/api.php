@@ -35,10 +35,7 @@ Route::prefix('users')
         Route::get('', [UserController::class, 'index']);
         Route::get('/{id}', [UserController::class, 'show']);
         Route::delete('delete/{id}', [UserController::class, 'destroy']);
-        Route::get('chart/{start}/{end}', [
-            MessageController::class,
-            'getAllMessageInPeriodOfTime',
-        ]);
+        Route::get('chart/{start}/{end}', [MessageController::class, 'getAllMessageInPeriodOfTime',]);
         Route::get('cake/{start}/{end}', [MessageController::class, 'cakeChart']);
     });
 
@@ -49,7 +46,7 @@ Route::prefix('rooms')
         Route::get('', [RoomController::class, 'index']);
         Route::get('/user', [RoomController::class, 'userRooms']);
         Route::get('/{name}', [RoomController::class, 'show']);
-        Route::get('search/{name?}', [RoomController::class, 'search']);
+        Route::get('search/{name}', [RoomController::class, 'search']);
         Route::post('/', [RoomController::class, 'store']);
         Route::put('/join', [RoomController::class, 'join']);
         Route::put('/left', [RoomController::class, 'left']);
