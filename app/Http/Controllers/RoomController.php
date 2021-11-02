@@ -42,21 +42,15 @@ class RoomController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => [
-                'required',
-                'max:16',
-                'min:3',
+            'name' => ['required', 'max:16', 'min:3',
                 Rule::unique('rooms')->withoutTrashed(),
             ],
             'access' => ['required', Rule::in(['private', 'public'])],
-            'description' => 'max:512|min:3',
+            'description' => 'max:512',
         ]);
 
         if ($validator->fails()) {
-            return response()->json(
-                ['error' => $validator->getMessageBag()],
-                400
-            );
+            return response()->json(['error' => $validator->getMessageBag()], 400);
         }
 
         if ($request->access == 'private') {
@@ -64,27 +58,19 @@ class RoomController extends Controller
                 'key' => 'required|min:6|max:32',
             ]);
             if ($validator->fails()) {
-                return response()->json(
-                    ['error' => $validator->getMessageBag()],
-                    400
-                );
+                return response()->json(['error' => $validator->getMessageBag()], 400);
             }
         }
 
         $room = Room::create([
             'name' => $request->name,
             'description' => $request->description,
-            'access' => $request->access,
+            'access' => $request->access ?? null,
             'key' => Hash::make($request->key) ?? null,
         ]);
         $room->members()->attach(auth()->user(), ['role_in_room' => 'owner']);
 
-        return response()->json(
-            [
-                'success' => 'اتاق جدید با موفقیت ایجاد شد.',
-            ],
-            201
-        );
+        return response()->json(['success' => 'اتاق جدید با موفقیت ایجاد شد.'], 201);
     }
 
     public function join(Request $request)
@@ -255,25 +241,16 @@ class RoomController extends Controller
 
     public function search(string $name)
     {
-        $rooms = Room::where('name', 'LIKE', $name . '%')->get();
+        $rooms = Room::where('name', 'LIKE', $name . '%')->paginate(20);
 
-        $finalRooms = new Collection();
         foreach ($rooms as &$room) {
             if ($room->members->contains(auth()->user())) {
                 $room->is_join = 1;
             } else {
                 $room->is_join = 0;
             }
-            $finalRooms->add([
-                'name' => $room->name,
-                'access' => $room->access,
-                'is_join' => $room->is_join,
-            ]);
         }
-        dd($finalRooms);
-        $finalRooms2 = $finalRooms->paginate(20);
-        return RoomResource::collection($finalRooms2);
-        return response()->json(['rooms' => $finalRooms]);
+        return RoomResource::collection($rooms);
     }
 
     public function update(Request $request, $id)

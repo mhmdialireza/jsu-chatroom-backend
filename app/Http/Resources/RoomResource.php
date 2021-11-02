@@ -40,6 +40,7 @@ class RoomResource extends JsonResource
                     ->first()
             ),
             'number_of_messages' => $this->messages()->count(),
+            'is_join' => $this->is_join ?? 'here is invalid',
         ];
     }
 }
