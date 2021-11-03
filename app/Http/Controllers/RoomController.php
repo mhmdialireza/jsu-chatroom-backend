@@ -83,7 +83,7 @@ class RoomController extends Controller
         if ($room->members->count() == 50) {
             return response()->json(['error' => 'تعداد اعضای گروه به حداکثر میزان خود رسیده است.',], 400);
         }
-//        return 1;
+        
         if (
             !count(Message::where('room_id', $room->room_id)->get()) ||
             !Carbon::instance(
@@ -264,10 +264,7 @@ class RoomController extends Controller
         try {
             $room = Room::whereId($id)->firstOrFail();
         } catch (\Throwable $th) {
-            return response()->json(
-                ['error' => 'اتاقی با این مشخصات وجود ندارد'],
-                404
-            );
+            return response()->json(['error' => 'اتاقی با این مشخصات وجود ندارد'],404);
         }
 
         if (auth()->user()->id != $room->members()->first()->id) {
@@ -439,6 +436,7 @@ class RoomController extends Controller
         $x->save();
 
         $room->members()->detach($user);
+        $room->decrement('number_of_members');
 
         return response()->json(['success' => 'کاربر مورد نظر با موفقیت از گروه حذف شد.'], 202);
     }
