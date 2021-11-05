@@ -41,9 +41,7 @@ class RoomController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => ['required', 'max:16', 'min:3',
-                Rule::unique('rooms')->withoutTrashed(),
-            ],
+            'name' => ['required', 'max:16', 'min:3', Rule::unique('rooms')->withoutTrashed()],
             'access' => ['required', Rule::in(['private', 'public'])],
             'description' => 'max:512',
         ]);
@@ -83,7 +81,7 @@ class RoomController extends Controller
         if ($room->members->count() == 50) {
             return response()->json(['error' => 'تعداد اعضای گروه به حداکثر میزان خود رسیده است.',], 400);
         }
-        
+
         if (
             !count(Message::where('room_id', $room->room_id)->get()) ||
             !Carbon::instance(
@@ -264,7 +262,7 @@ class RoomController extends Controller
         try {
             $room = Room::whereId($id)->firstOrFail();
         } catch (\Throwable $th) {
-            return response()->json(['error' => 'اتاقی با این مشخصات وجود ندارد'],404);
+            return response()->json(['error' => 'اتاقی با این مشخصات وجود ندارد'], 404);
         }
 
         if (auth()->user()->id != $room->members()->first()->id) {
@@ -330,7 +328,6 @@ class RoomController extends Controller
                     400
                 );
             }
-
             if (!Hash::check($request->key, $room->key)) {
                 return response()->json(['error' => 'کلید اشتباه است.'], 403);
             }
@@ -349,10 +346,7 @@ class RoomController extends Controller
         try {
             $room = Room::whereId($id)->firstOrFail();
         } catch (\Throwable $th) {
-            return response()->json(
-                ['error' => 'اتاقی با این مشخصات وجود ندارد'],
-                404
-            );
+            return response()->json(['error' => 'اتاقی با این مشخصات وجود ندارد'], 404);
         }
 
         if ($room->access == 'private') {
@@ -361,10 +355,7 @@ class RoomController extends Controller
             ]);
 
             if ($validator->fails()) {
-                return response()->json(
-                    ['error' => $validator->getMessageBag()],
-                    400
-                );
+                return response()->json(['error' => $validator->getMessageBag()], 400);
             }
 
             if (!Hash::check($request->key, $room->key)) {
@@ -373,18 +364,12 @@ class RoomController extends Controller
         }
 
         if (auth()->user()->id != $room->members()->first()->id) {
-            return response()->json(
-                ['error' => 'اجازه دسترسی وجود ندارد'],
-                403
-            );
+            return response()->json(['error' => 'اجازه دسترسی وجود ندارد'], 403);
         }
 
         $room->delete();
 
-        return response()->json(
-            ['success' => 'اتاق مورد نظر با موفقیت حذف شد.'],
-            202
-        );
+        return response()->json(['success' => 'اتاق مورد نظر با موفقیت حذف شد.'], 202);
     }
 
     public function deleteMember($roomId, $userId)

@@ -41,10 +41,8 @@ class AuthController extends Controller
         $token = $user->createToken('myApp')->plainTextToken;
 
         return response()->json([
-            'success' => [
-                'user' => $user,
+                'user' => new UserResource($user),
                 'token' => $token,
-            ],
         ],201);
     }
 
@@ -54,11 +52,11 @@ class AuthController extends Controller
             'email' => 'required|email',
             'password' => 'required|string|min:8',
         ]);
-        
+
         if ($validator->fails()) {
-            return response()->json($validator->getMessageBag(), 400); 
+            return response()->json($validator->getMessageBag(), 400);
         }
-        
+
         $user = User::whereEmail($request->email)->first();
 
         if (!$user) {
@@ -74,10 +72,8 @@ class AuthController extends Controller
         $token = $user->createToken('myApp')->plainTextToken;
 
         return response()->json([
-            'success' => [
-                'user' => new UserResource($user),
-                'token' => $token,
-            ],
+            'user' => new UserResource($user),
+            'token' => $token,
         ]);
     }
 

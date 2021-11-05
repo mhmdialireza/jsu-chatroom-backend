@@ -67,9 +67,9 @@ Route::middleware('auth:sanctum')
         Route::post('/room', [MessageController::class, 'store']);
     });
 
-Route::post('/token', function (Request $r) {
-    if (auth()->user()) {
-        return response()->json(auth()->user());
-    }
-    return response()->json('error', 404);
-});
+//Route::post('/token', function (Request $r) {
+//    if (auth()->user()) {
+//        return response()->json(auth()->user());
+//    }
+//    return response()->json('error', 404);
+//});
