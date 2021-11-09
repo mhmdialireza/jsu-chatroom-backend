@@ -298,17 +298,10 @@ class RoomController extends Controller
             return response()->json(['room' => $room], 202);
         } elseif ($request->access == 'public') {
             $validator = Validator::make($request->all(), [
-                'key' => 'required',
+                'key' => 'required|min:6|max:32',
             ]);
             if ($validator->fails()) {
-                return response()->json(
-                    ['error' => $validator->getMessageBag()],
-                    400
-                );
-            }
-
-            if (!Hash::check($request->key, $room->key)) {
-                return response()->json(['error' => 'کلید اشتباه است.'], 403);
+                return response()->json(['error' => $validator->getMessageBag()],400);
             }
 
             $room->update([
@@ -323,14 +316,13 @@ class RoomController extends Controller
                 'key' => 'required',
             ]);
             if ($validator->fails()) {
-                return response()->json(
-                    ['error' => $validator->getMessageBag()],
-                    400
-                );
+                return response()->json(['error' => $validator->getMessageBag()],400);
             }
+
             if (!Hash::check($request->key, $room->key)) {
                 return response()->json(['error' => 'کلید اشتباه است.'], 403);
             }
+
             $room->update([
                 'name' => $request->name,
                 'description' => $request->description,
