@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use App\Http\Resources\RoomResource;
 use App\Http\Resources\UserResource;
+use App\Http\Services\Image\ImageService;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 
@@ -60,8 +61,10 @@ class UserController extends Controller
         return response()->json(new UserResource(auth()->user()));
     }
 
-    public function profileUpdate(Request $request)
+    public function profileUpdate(Request $request, ImageService $imageService)
     {
+        $user = auth()->user();
+
         $validator = Validator::make($request->all(), [
             'name' => 'required|max:16|min:3',
             'email' => [
@@ -71,6 +74,7 @@ class UserController extends Controller
                     ->ignore(auth()->user()->id)
                     ->withoutTrashed(),
             ],
+            'image' => 'image',
         ]);
 
         if ($validator->fails()) {
@@ -79,9 +83,31 @@ class UserController extends Controller
                 400
             );
         }
-        auth()
-            ->user()
-            ->update(['name' => $request->name, 'email' => $request->email]);
+
+        if ($user->profile_path) {
+            $imageService->deleteImage($user->profile_path);
+        }
+
+        $result = null;
+        if ($request->hasFile('image')) {
+            $imageService->setExclusiveDirectory(
+                'images' . DIRECTORY_SEPARATOR . 'users'
+            );
+            $result = $imageService->save($request->file('image'));
+        }
+
+        if ($result === false) {
+            return response()->json(
+                ['error' => 'آپلود تصویر با خطا مواجه شد.'],
+                500
+            );
+        }
+
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->profile_path = $result;
+        $user->save();
+
         return response()->json(new UserResource(auth()->user()), 202);
     }
 

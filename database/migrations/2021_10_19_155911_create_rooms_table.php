@@ -16,6 +16,7 @@ class CreateRoomsTable extends Migration
         Schema::create('rooms', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('pic_path')->nullable();
             $table->text('description')->nullable();
             $table->enum('access', ['private', 'public']);
             $table->string('key')->nullable();

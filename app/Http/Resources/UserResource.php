@@ -24,6 +24,7 @@ class UserResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'email' => $this->email,
+            'profile_path' => $this->profile_path,
             'role_in_site' => $this->role_in_site ?? 'user',
             'created_at' => $date,
             'role_in_room' => $this->pivot->role_in_room ?? null,

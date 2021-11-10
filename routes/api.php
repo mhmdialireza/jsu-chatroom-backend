@@ -35,8 +35,14 @@ Route::prefix('users')
         Route::get('', [UserController::class, 'index']);
         Route::get('/{id}', [UserController::class, 'show']);
         Route::delete('delete/{id}', [UserController::class, 'destroy']);
-        Route::get('chart/{start}/{end}', [MessageController::class, 'getAllMessageInPeriodOfTime',]);
-        Route::get('cake/{start}/{end}', [MessageController::class, 'cakeChart']);
+        Route::get('chart/{start}/{end}', [
+            MessageController::class,
+            'getAllMessageInPeriodOfTime',
+        ]);
+        Route::get('cake/{start}/{end}', [
+            MessageController::class,
+            'cakeChart',
+        ]);
     });
 
 //rooms

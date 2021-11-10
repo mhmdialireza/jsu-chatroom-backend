@@ -5,12 +5,13 @@ namespace App\Http\Controllers;
 use App\Models\Room;
 use App\Models\User;
 use App\Models\Message;
-use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Validation\Rule;
 use App\Http\Resources\RoomResource;
 use App\Http\Resources\UserResource;
 use Illuminate\Support\Facades\Hash;
+use App\Http\Services\Image\ImageService;
 use Illuminate\Support\Facades\Validator;
 
 class RoomController extends Controller
@@ -38,16 +39,25 @@ class RoomController extends Controller
         return RoomResource::collection($rooms);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, ImageService $imageService)
     {
         $validator = Validator::make($request->all(), [
-            'name' => ['required', 'max:16', 'min:3', Rule::unique('rooms')->withoutTrashed()],
+            'name' => [
+                'required',
+                'max:16',
+                'min:3',
+                Rule::unique('rooms')->withoutTrashed(),
+            ],
             'access' => ['required', Rule::in(['private', 'public'])],
             'description' => 'max:512',
+            'image' => 'image',
         ]);
 
         if ($validator->fails()) {
-            return response()->json(['error' => $validator->getMessageBag()], 400);
+            return response()->json(
+                ['error' => $validator->getMessageBag()],
+                400
+            );
         }
 
         if ($request->access == 'private') {
@@ -55,19 +65,42 @@ class RoomController extends Controller
                 'key' => 'required|min:6|max:32',
             ]);
             if ($validator->fails()) {
-                return response()->json(['error' => $validator->getMessageBag()], 400);
+                return response()->json(
+                    ['error' => $validator->getMessageBag()],
+                    400
+                );
             }
         }
 
-        $room = Room::create([
-            'name' => $request->name,
-            'description' => $request->description,
-            'access' => $request->access ?? null,
-            'key' => Hash::make($request->key) ?? null,
-        ]);
+        $result = null;
+        if ($request->hasFile('image')) {
+            $imageService->setExclusiveDirectory(
+                'images' . DIRECTORY_SEPARATOR . 'rooms'
+            );
+            $result = $imageService->save($request->file('image'));
+        }
+
+        if ($result === false) {
+            return response()->json(
+                ['error' => 'آپلود تصویر با خطا مواجه شد.'],
+                500
+            );
+        }
+
+        $room = new Room();
+        $room->name = $request->name;
+        $room->description = $request->description;
+        $room->access = $request->access ?? null;
+        $room->key = Hash::make($request->key) ?? null;
+        $room->pic_path = $result ?? null;
+        $room->save();
+
         $room->members()->attach(auth()->user(), ['role_in_room' => 'owner']);
 
-        return response()->json(['success' => 'اتاق جدید با موفقیت ایجاد شد.'], 201);
+        return response()->json(
+            ['success' => 'اتاق جدید با موفقیت ایجاد شد.'],
+            201
+        );
     }
 
     public function join(Request $request)
@@ -75,26 +108,34 @@ class RoomController extends Controller
         try {
             $room = Room::where('name', $request->name)->firstOrFail();
         } catch (\Throwable $th) {
-            return response()->json(['error' => 'اتاقی با این مشخصات وجود ندارد'], 404);
+            return response()->json(
+                ['error' => 'اتاقی با این مشخصات وجود ندارد'],
+                404
+            );
         }
 
         if ($room->members->count() == 50) {
-            return response()->json(['error' => 'تعداد اعضای گروه به حداکثر میزان خود رسیده است.',], 400);
+            return response()->json(
+                ['error' => 'تعداد اعضای گروه به حداکثر میزان خود رسیده است.'],
+                400
+            );
         }
 
         if (
             !count(Message::where('room_id', $room->room_id)->get()) ||
             !Carbon::instance(
-                Message::where('room_id', $room->room_id)->latest()->first()->created_at
+                Message::where('room_id', $room->room_id)
+                    ->latest()
+                    ->first()->created_at
             )->isToday()
         ) {
             $x = Message::create([
                 'message' => Carbon::instance(now())->toDateString(),
                 'user_id' => $room->members()->first()->id,
                 'room_id' => $room->id,
-                'type' => 'time'
+                'type' => 'time',
             ]);
-            $x->type = "time";
+            $x->type = 'time';
             $x->save();
         }
 
@@ -103,7 +144,10 @@ class RoomController extends Controller
         }
 
         if ($room->members->contains(auth()->user())) {
-            return response()->json(['error' => 'نمی‌توانید مجدد عضو شوید.', 400]);
+            return response()->json([
+                'error' => 'نمی‌توانید مجدد عضو شوید.',
+                400,
+            ]);
         }
 
         if ($room->access == 'private') {
@@ -146,21 +190,27 @@ class RoomController extends Controller
 
         if (
             !count(Message::where('room_id', $room->room_id)->get()) ||
-            !Carbon::instance(Message::where('room_id', $room->room_id)
-                ->latest()->first()->created_at)->isToday()
+            !Carbon::instance(
+                Message::where('room_id', $room->room_id)
+                    ->latest()
+                    ->first()->created_at
+            )->isToday()
         ) {
             $x = Message::create([
                 'message' => Carbon::instance(now())->toDateString(),
                 'user_id' => $room->members()->first()->id,
                 'room_id' => $room->id,
-                'type' => 'time'
+                'type' => 'time',
             ]);
-            $x->type = "time";
+            $x->type = 'time';
             $x->save();
         }
 
         if (!$room->members->contains(auth()->user())) {
-            return response()->json(['error' => 'شما جز اعضای گروه نیستید.',], 403);
+            return response()->json(
+                ['error' => 'شما جز اعضای گروه نیستید.'],
+                403
+            );
         }
 
         $x = Message::create([
@@ -257,12 +307,15 @@ class RoomController extends Controller
         return RoomResource::collection($rooms);
     }
 
-    public function update(Request $request, $id)
+    public function update(Request $request, ImageService $imageService, $id)
     {
         try {
             $room = Room::whereId($id)->firstOrFail();
         } catch (\Throwable $th) {
-            return response()->json(['error' => 'اتاقی با این مشخصات وجود ندارد'], 404);
+            return response()->json(
+                ['error' => 'اتاقی با این مشخصات وجود ندارد'],
+                404
+            );
         }
 
         if (auth()->user()->id != $room->members()->first()->id) {
@@ -279,8 +332,9 @@ class RoomController extends Controller
                 'min:3',
                 Rule::unique('rooms')->ignore($id),
             ],
-            'description' => 'required|max:512|min:3',
+            'description' => 'max:512|min:3',
             'access' => ['required', Rule::in(['private', 'public'])],
+            'image' => 'image',
         ]);
 
         if ($validator->fails()) {
@@ -289,46 +343,71 @@ class RoomController extends Controller
                 400
             );
         }
+        if ($room->pic_path) {
+            $imageService->deleteImage($room->pic_path);
+        }
+
+        $result = null;
+        if ($request->hasFile('image')) {
+            $imageService->setExclusiveDirectory(
+                'images' . DIRECTORY_SEPARATOR . 'rooms'
+            );
+            $result = $imageService->save($request->file('image'));
+        }
+
+        if ($result === false) {
+            return response()->json(
+                ['error' => 'آپلود تصویر با خطا مواجه شد.'],
+                500
+            );
+        }
 
         if ($request->access == $room->access) {
-            $room->update([
-                'name' => $request->name,
-                'description' => $request->description,
-            ]);
+            $room->name = $request->name;
+            $room->description = $request->description ?? null;
+            $room->pic_path = $result ?? $room->pic_path;
+            $room->save();
             return response()->json(['room' => $room], 202);
         } elseif ($request->access == 'public') {
             $validator = Validator::make($request->all(), [
                 'key' => 'required|min:6|max:32',
             ]);
             if ($validator->fails()) {
-                return response()->json(['error' => $validator->getMessageBag()],400);
-            }
-
-            $room->update([
-                'name' => $request->name,
-                'description' => $request->description,
-                'access' => 'public',
-                'key' => null,
-            ]);
-            return response()->json(['room' => $room], 202);
-        } else {
-            $validator = Validator::make($request->all(), [
-                'key' => 'required',
-            ]);
-            if ($validator->fails()) {
-                return response()->json(['error' => $validator->getMessageBag()],400);
+                return response()->json(
+                    ['error' => $validator->getMessageBag()],
+                    400
+                );
             }
 
             if (!Hash::check($request->key, $room->key)) {
                 return response()->json(['error' => 'کلید اشتباه است.'], 403);
             }
 
-            $room->update([
-                'name' => $request->name,
-                'description' => $request->description,
-                'access' => 'private',
-                'key' => Hash::make($request->key),
+            $room->name = $request->name;
+            $room->description = $request->description ?? null;
+            $room->access = 'public';
+            $room->pic_path = $result ?? $room->pic_path;
+            $room->key = null;
+            $room->save();
+            return response()->json(['room' => $room], 202);
+        } else {
+            $validator = Validator::make($request->all(), [
+                'key' => 'required',
             ]);
+            if ($validator->fails()) {
+                return response()->json(
+                    ['error' => $validator->getMessageBag()],
+                    400
+                );
+            }
+
+            $room->name = $request->name;
+            $room->description = $request->description ?? null;
+            $room->access = 'private';
+            $room->pic_path = $result ?? $room->pic_path;
+            $room->key = Hash::make($request->key);
+            $room->save();
+
             return response()->json(['room' => $room], 202);
         }
     }
@@ -338,7 +417,10 @@ class RoomController extends Controller
         try {
             $room = Room::whereId($id)->firstOrFail();
         } catch (\Throwable $th) {
-            return response()->json(['error' => 'اتاقی با این مشخصات وجود ندارد'], 404);
+            return response()->json(
+                ['error' => 'اتاقی با این مشخصات وجود ندارد'],
+                404
+            );
         }
 
         if ($room->access == 'private') {
@@ -347,7 +429,10 @@ class RoomController extends Controller
             ]);
 
             if ($validator->fails()) {
-                return response()->json(['error' => $validator->getMessageBag()], 400);
+                return response()->json(
+                    ['error' => $validator->getMessageBag()],
+                    400
+                );
             }
 
             if (!Hash::check($request->key, $room->key)) {
@@ -356,12 +441,18 @@ class RoomController extends Controller
         }
 
         if (auth()->user()->id != $room->members()->first()->id) {
-            return response()->json(['error' => 'اجازه دسترسی وجود ندارد'], 403);
+            return response()->json(
+                ['error' => 'اجازه دسترسی وجود ندارد'],
+                403
+            );
         }
 
         $room->delete();
 
-        return response()->json(['success' => 'اتاق مورد نظر با موفقیت حذف شد.'], 202);
+        return response()->json(
+            ['success' => 'اتاق مورد نظر با موفقیت حذف شد.'],
+            202
+        );
     }
 
     public function deleteMember($roomId, $userId)
@@ -378,30 +469,42 @@ class RoomController extends Controller
         try {
             $user = User::whereId($userId)->firstOrFail();
         } catch (\Throwable $th) {
-            return response()->json(['error' => 'کاربری با این مشخصات وجود ندارد.'], 404);
+            return response()->json(
+                ['error' => 'کاربری با این مشخصات وجود ندارد.'],
+                404
+            );
         }
 
         if (auth()->user()->id == $userId) {
-            return response()->json(['error' => 'شما نمیتوانید خودتان را حذف کنید.'], 400);
+            return response()->json(
+                ['error' => 'شما نمیتوانید خودتان را حذف کنید.'],
+                400
+            );
         }
 
         if (
             !count(Message::where('room_id', $room->room_id)->get()) ||
-            !Carbon::instance(Message::where('room_id', $room->room_id)
-                ->latest()->first()->created_at)->isToday()
+            !Carbon::instance(
+                Message::where('room_id', $room->room_id)
+                    ->latest()
+                    ->first()->created_at
+            )->isToday()
         ) {
             $x = Message::create([
                 'message' => Carbon::instance(now())->toDateString(),
                 'user_id' => $room->members()->first()->id,
                 'room_id' => $room->id,
-                'type' => 'time'
+                'type' => 'time',
             ]);
-            $x->type = "time";
+            $x->type = 'time';
             $x->save();
         }
 
         if (auth()->user()->id != $room->members()->first()->id) {
-            return response()->json(['error' => 'اجازه دسترسی وجود ندارد'], 403);
+            return response()->json(
+                ['error' => 'اجازه دسترسی وجود ندارد'],
+                403
+            );
         }
         $x = Message::create([
             'message' => 'از گروه اخراج شد ' . auth()->user()->name,
@@ -415,6 +518,9 @@ class RoomController extends Controller
         $room->members()->detach($user);
         $room->decrement('number_of_members');
 
-        return response()->json(['success' => 'کاربر مورد نظر با موفقیت از گروه حذف شد.'], 202);
+        return response()->json(
+            ['success' => 'کاربر مورد نظر با موفقیت از گروه حذف شد.'],
+            202
+        );
     }
 }
