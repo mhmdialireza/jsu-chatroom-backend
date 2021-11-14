@@ -140,14 +140,16 @@ class RoomController extends Controller
         }
 
         if (count($room->members) == 50) {
-            return response()->json(['error' => 'اعضای گروه کامل است.', 400]);
+            return response()->json(['error' => 'اعضای گروه کامل است'], 400);
         }
 
         if ($room->members->contains(auth()->user())) {
-            return response()->json([
-                'error' => 'نمی‌توانید مجدد عضو شوید.',
-                400,
-            ]);
+            return response()->json(
+                [
+                    'error' => 'نمی‌توانید مجدد عضو شوید.',
+                ],
+                400
+            );
         }
 
         if ($room->access == 'private') {
@@ -332,7 +334,7 @@ class RoomController extends Controller
                 'min:3',
                 Rule::unique('rooms')->ignore($id),
             ],
-            'description' => 'max:512|min:3',
+            'description' => 'max:512',
             'access' => ['required', Rule::in(['private', 'public'])],
             'image' => 'image',
         ]);
@@ -367,7 +369,7 @@ class RoomController extends Controller
             $room->description = $request->description ?? null;
             $room->pic_path = $result ?? $room->pic_path;
             $room->save();
-            return response()->json(['room' => $room], 202);
+            return response()->json(['room' => new RoomResource($room)], 202);
         } elseif ($request->access == 'public') {
             $validator = Validator::make($request->all(), [
                 'key' => 'required|min:6|max:32',
@@ -378,18 +380,16 @@ class RoomController extends Controller
                     400
                 );
             }
-
             if (!Hash::check($request->key, $room->key)) {
                 return response()->json(['error' => 'کلید اشتباه است.'], 403);
             }
-
             $room->name = $request->name;
             $room->description = $request->description ?? null;
             $room->access = 'public';
             $room->pic_path = $result ?? $room->pic_path;
             $room->key = null;
             $room->save();
-            return response()->json(['room' => $room], 202);
+            return response()->json(['room' => new RoomResource($room)], 202);
         } else {
             $validator = Validator::make($request->all(), [
                 'key' => 'required',
@@ -408,7 +408,7 @@ class RoomController extends Controller
             $room->key = Hash::make($request->key);
             $room->save();
 
-            return response()->json(['room' => $room], 202);
+            return response()->json(['room' => new RoomResource($room)], 202);
         }
     }
 
