@@ -278,6 +278,7 @@ ___
   _name (اسم گروه)_ <br>
   _key_ <br>
   _newKey_ <br>
+  _newKey_confirmation_ <br>
 
 ### **بروزرسانی گروه**
 

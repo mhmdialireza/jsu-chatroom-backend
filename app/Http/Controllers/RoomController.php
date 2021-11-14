@@ -254,7 +254,7 @@ class RoomController extends Controller
 
         $validator = Validator::make($request->all(), [
             'key' => 'required',
-            'new-key' => 'required|min:6|max:32',
+            'newkey' => 'required|min:6|max:32',
         ]);
 
         if ($validator->fails()) {
