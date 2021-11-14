@@ -34,7 +34,6 @@ class UserController extends Controller
                 'user' => ($user = new UserResource(
                     User::whereId($id)->firstOrFail()
                 )),
-                'rooms' => RoomResource::collection($user->rooms),
             ];
         } catch (\Throwable $th) {
             return response()->json(
