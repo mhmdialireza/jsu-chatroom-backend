@@ -29,14 +29,6 @@ class UserController extends Controller
 
     public function show($id)
     {
-        // if (auth()->user()->role_in_site != 'admin') {
-        //     return response()->json(
-        //         [
-        //             'error' => 'اجازه دسترسی وجود ندارد.',
-        //         ],
-        //         403
-        //     );
-        // }
         try {
             return [
                 'user' => ($user = new UserResource(

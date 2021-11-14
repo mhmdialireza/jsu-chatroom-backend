@@ -93,6 +93,15 @@ class MessageController extends Controller
 
     public function getAllMessageInPeriodOfTime($start, $end)
     {
+        if (auth()->user()->role_in_site != 'admin') {
+            return response()->json(
+                [
+                    'error' => 'اجازه دسترسی وجود ندارد.',
+                ],
+                403
+            );
+        }
+        
         $startArray = explode('-', $start);
         $endArray = explode('-', $end);
 
@@ -197,6 +206,15 @@ class MessageController extends Controller
 
     public function cakeChart($start, $end)
     {
+        if (auth()->user()->role_in_site != 'admin') {
+            return response()->json(
+                [
+                    'error' => 'اجازه دسترسی وجود ندارد.',
+                ],
+                403
+            );
+        }
+
         $startArray = explode('-', $start);
         $endArray = explode('-', $end);
 
