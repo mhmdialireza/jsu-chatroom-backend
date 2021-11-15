@@ -254,7 +254,7 @@ class RoomController extends Controller
 
         $validator = Validator::make($request->all(), [
             'key' => 'required',
-            'newkey' => 'required|min:6|max:32',
+            'new_key' => 'required|min:6|max:32',
         ]);
 
         if ($validator->fails()) {
@@ -265,10 +265,10 @@ class RoomController extends Controller
         }
 
         if (!Hash::check($request->key, $room->key)) {
-            return response()->json(['کلید تطابق ندارد.'], 403);
+            return response()->json(['error'=>'کلید تطابق ندارد.'], 403);
         }
 
-        $room->update(['key' => Hash::make($request->newKey)]);
+        $room->update(['key' => Hash::make($request->new_key)]);
 
         return response()->json(
             [
@@ -422,12 +422,12 @@ class RoomController extends Controller
                 404
             );
         }
-
+        
         if ($room->access == 'private') {
             $validator = Validator::make($request->all(), [
                 'key' => 'required',
             ]);
-
+            
             if ($validator->fails()) {
                 return response()->json(
                     ['error' => $validator->getMessageBag()],
@@ -454,7 +454,7 @@ class RoomController extends Controller
             202
         );
     }
-
+    
     public function deleteMember($roomId, $userId)
     {
         try {
@@ -463,6 +463,13 @@ class RoomController extends Controller
             return response()->json(
                 ['error' => 'اتاقی با این مشخصات وجود ندارد'],
                 404
+            );
+        }
+
+        if (auth()->user()->id != $room->members()->first()->id) {
+            return response()->json(
+                ['error' => 'اجازه دسترسی وجود ندارد'],
+                403
             );
         }
 
@@ -500,12 +507,6 @@ class RoomController extends Controller
             $x->save();
         }
 
-        if (auth()->user()->id != $room->members()->first()->id) {
-            return response()->json(
-                ['error' => 'اجازه دسترسی وجود ندارد'],
-                403
-            );
-        }
         $x = Message::create([
             'message' => 'از گروه اخراج شد ' . auth()->user()->name,
             'user_id' => auth()->user()->id,
