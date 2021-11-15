@@ -26,21 +26,21 @@ class RoomResource extends JsonResource
             'seconde' => (int) $time[2],
         ];
         return [
-            'id' => $this->id,
-            'name' => $this->name,
-            'pic_path' => $this->pic_path,
-            'owner_id' => $this->members()->first()->id,
-            'description' => $this->description,
-            'access' => $this->access,
-            'number_of_members' => $this->number_of_members,
-            'created_at' => $date,
+            'id' => $this->id ?? null,
+            'name' => $this->name ?? null,
+            'pic_path' => $this->pic_path ?? null,
+            'owner_id' => $this->members()->first()->id ?? null,
+            'description' => $this->description ?? null,
+            'access' => $this->access ?? null,
+            'number_of_members' => $this->number_of_members ?? null,
+            'created_at' => $date ?? null,
             'last_message' => new MessageResource(
                 $this->messages()
                     ->whereNotIn('type', ['time'])
                     ->latest()
                     ->first()
             ),
-            'number_of_messages' => $this->messages()->count(),
+            'number_of_messages' => $this->messages()->count() ?? null,
             'is_join' => $this->is_join ?? 'here is invalid',
         ];
     }

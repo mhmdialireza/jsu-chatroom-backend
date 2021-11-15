@@ -21,12 +21,12 @@ class UserResource extends JsonResource
         ];
 
         return [
-            'id' => $this->id,
-            'name' => $this->name,
-            'email' => $this->email,
-            'profile_path' => $this->profile_path,
+            'id' => $this->id ?? null,
+            'name' => $this->name ?? null,
+            'email' => $this->email ?? null,
+            'profile_path' => $this->profile_path ?? null,
             'role_in_site' => $this->role_in_site ?? 'user',
-            'created_at' => $date,
+            'created_at' => $date ?? null,
             'role_in_room' => $this->pivot->role_in_room ?? null,
         ];
     }

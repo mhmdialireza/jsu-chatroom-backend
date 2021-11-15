@@ -49,6 +49,7 @@ class RoomController extends Controller
                 Rule::unique('rooms')->withoutTrashed(),
             ],
             'access' => ['required', Rule::in(['private', 'public'])],
+            'key' => 'required_if:access,private',
             'description' => 'max:512',
             'image' => 'image',
         ]);
@@ -58,18 +59,6 @@ class RoomController extends Controller
                 ['error' => $validator->getMessageBag()],
                 400
             );
-        }
-
-        if ($request->access == 'private') {
-            $validator = Validator::make($request->all(), [
-                'key' => 'required|min:6|max:32',
-            ]);
-            if ($validator->fails()) {
-                return response()->json(
-                    ['error' => $validator->getMessageBag()],
-                    400
-                );
-            }
         }
 
         $result = null;

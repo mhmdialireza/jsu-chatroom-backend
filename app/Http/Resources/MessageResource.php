@@ -27,14 +27,14 @@ class MessageResource extends JsonResource
         ];
 
         return [
-            'id' => $this->id,
-            'text' => $this->message,
-            'user_name' => (new UserResource(User::find($this->user_id)))->name,
-            'user_id' => $this->user_id,
-            'room_name' => Room::find($this->room_id)->name,
-            'room_id' => $this->room_id,
-            'created_at' => $date,
-            'type' => $this->type,
+            'id' => $this->id ?? null,
+            'text' => $this->message ?? null,
+            'user_name' => (new UserResource(User::find($this->user_id)))->name ?? null,
+            'user_id' => $this->user_id ,
+            'room_name' => Room::find($this->room_id)->name ?? null,
+            'room_id' => $this->room_id ?? null,
+            'created_at' => $date ?? null,
+            'type' => $this->type ?? null,
         ];
     }
 }
