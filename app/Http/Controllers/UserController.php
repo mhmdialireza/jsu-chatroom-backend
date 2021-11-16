@@ -54,13 +54,19 @@ class UserController extends Controller
             );
         }
 
+        $user = null;
         try {
             $user = User::whereId($id)->firstOrFail();
-            $user->delete();
-            return response()->json(['success' => 'کاربر با موفقیت حذف شد.']);
         } catch (\Throwable $th) {
-            return 'کاربری با این مشخصات وجود ندارد';
+            return response()->json(['کاربری با این مشخصات وجود ندارد.'],404) ;
         }
+
+        if($user->role_in_site == 'admin'){
+            return response()->json(['شما نمی‌توانید خودتان را حذف کنید.'],400) ;
+        }
+
+        $user->delete();
+        return response()->json(['success' => 'کاربر با موفقیت حذف شد.']);
     }
 
     public function profileIndex()
@@ -81,7 +87,7 @@ class UserController extends Controller
                     ->ignore(auth()->user()->id)
                     ->withoutTrashed(),
             ],
-            'image' => 'image',
+            // 'image' => 'image',
         ]);
 
         if ($validator->fails()) {

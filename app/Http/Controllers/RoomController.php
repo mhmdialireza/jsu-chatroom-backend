@@ -312,7 +312,7 @@ class RoomController extends Controller
             ],
             'description' => 'max:512',
             'access' => ['required', Rule::in(['private', 'public'])],
-            'image' => 'image',
+            // 'image' => 'image',
         ]);
 
         if ($validator->fails()) {

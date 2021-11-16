@@ -37,7 +37,7 @@ return [
     'email' => 'فرمت :attribute معتبر نیست.',
     'exists' => ':attribute انتخاب شده، معتبر نیست.',
     'filled' => 'فیلد :attribute الزامی است',
-    'image' => ':attribute باید تصویر باشد.',
+    'image' => ':attribute باید جز فرم استاندارد تصویر باشد.',
     'in' => ':attribute انتخاب شده، معتبر نیست.',
     'integer' => ':attribute باید نوع داده ای عددی (integer) باشد.',
     'ip' => ':attribute باید IP آدرس معتبر باشد.',
