@@ -40,4 +40,14 @@ class Room extends Model
     {
         return $this->hasMany(Message::class);
     }
+
+    public function adminId()
+    {
+        return $this->members()->first()->id;
+    }
+
+    public function admin()
+    {
+        return $this->members()->first();
+    }
 }

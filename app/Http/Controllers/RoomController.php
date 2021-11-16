@@ -51,7 +51,7 @@ class RoomController extends Controller
             'access' => ['required', Rule::in(['private', 'public'])],
             'key' => 'required_if:access,private',
             'description' => 'max:512',
-            'image' => 'image',
+            // 'image' => 'image',
         ]);
 
         if ($validator->fails()) {
@@ -79,12 +79,10 @@ class RoomController extends Controller
         $room = new Room();
         $room->name = $request->name;
         $room->description = $request->description;
-        $room->access = $request->access ?? null;
+        $room->access = $request->access ?? 'public';
         $room->key = Hash::make($request->key) ?? null;
-        $room->pic_path = $result ?? null;
+        $room->pic_path = $result;
         $room->save();
-
-        $room->members()->attach(auth()->user(), ['role_in_room' => 'owner']);
 
         return response()->json(
             ['success' => 'اتاق جدید با موفقیت ایجاد شد.'],
@@ -103,11 +101,8 @@ class RoomController extends Controller
             );
         }
 
-        if ($room->members->count() == 50) {
-            return response()->json(
-                ['error' => 'تعداد اعضای گروه به حداکثر میزان خود رسیده است.'],
-                400
-            );
+        if (count($room->members) == 50) {
+            return response()->json(['error' => 'اعضای گروه کامل است'], 400);
         }
 
         if (
@@ -118,20 +113,14 @@ class RoomController extends Controller
                     ->first()->created_at
             )->isToday()
         ) {
-            $x = Message::create([
-                'message' => Carbon::instance(now())->toDateString(),
-                'user_id' => $room->members()->first()->id,
-                'room_id' => $room->id,
-                'type' => 'time',
-            ]);
-            $x->type = 'time';
-            $x->save();
+            $message = new Message();
+            $message->message = Carbon::instance(now())->toDateString();
+            $message->user_id = $room->adminId();
+            $message->room_id = $room->id;
+            $message->type = 'time';
+            $message->save();
         }
-
-        if (count($room->members) == 50) {
-            return response()->json(['error' => 'اعضای گروه کامل است'], 400);
-        }
-
+        
         if ($room->members->contains(auth()->user())) {
             return response()->json(
                 [
@@ -154,14 +143,12 @@ class RoomController extends Controller
                 );
             }
         }
-        $x = Message::create([
-            'message' => 'وارد گروه شد ' . auth()->user()->name,
-            'user_id' => auth()->user()->id,
-            'room_id' => $room->id,
-            'type' => 'jlk',
-        ]);
-        $x->type = 'jlk';
-        $x->save();
+        $message = new Message();
+        $message->message = 'وارد گروه شد ' . auth()->user()->name;
+        $message->user_id = $room->adminId();
+        $message->room_id = $room->id;
+        $message->type = 'jlk';
+        $message->save();
 
         $room->members()->attach(auth()->user(), ['role_in_room' => 'member']);
         $room->increment('number_of_members');
@@ -254,7 +241,7 @@ class RoomController extends Controller
         }
 
         if (!Hash::check($request->key, $room->key)) {
-            return response()->json(['error'=>'کلید تطابق ندارد.'], 403);
+            return response()->json(['error' => 'کلید تطابق ندارد.'], 403);
         }
 
         $room->update(['key' => Hash::make($request->new_key)]);
@@ -404,19 +391,19 @@ class RoomController extends Controller
     public function destroy(Request $request, $id)
     {
         try {
-            $room = Room::whereId($id)->firstOrFail();
+            $room = Room::findOrFail($id);
         } catch (\Throwable $th) {
             return response()->json(
                 ['error' => 'اتاقی با این مشخصات وجود ندارد'],
                 404
             );
         }
-        
+
         if ($room->access == 'private') {
             $validator = Validator::make($request->all(), [
                 'key' => 'required',
             ]);
-            
+
             if ($validator->fails()) {
                 return response()->json(
                     ['error' => $validator->getMessageBag()],
@@ -443,7 +430,7 @@ class RoomController extends Controller
             202
         );
     }
-    
+
     public function deleteMember($roomId, $userId)
     {
         try {

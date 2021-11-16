@@ -21,7 +21,7 @@ class AuthController extends Controller
                 'email',
                 Rule::unique('users')->withoutTrashed(),
             ],
-            'password' => 'required|string|confirmed|min:8|max:16',
+            'password' => 'required|string|confirmed|min:6|max:16',
         ]);
 
         if ($validator->fails()) {
@@ -38,19 +38,20 @@ class AuthController extends Controller
             'role_in_site' => 'user',
         ]);
 
-        $token = $user->createToken('myApp')->plainTextToken;
-
-        return response()->json([
+        return response()->json(
+            [
                 'user' => new UserResource($user),
-                'token' => $token,
-        ],201);
+                'token' => $user->createToken('myApp')->plainTextToken,
+            ],
+            201
+        );
     }
 
     public function login(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required|email',
-            'password' => 'required|string|min:8',
+            'password' => 'required|string',
         ]);
 
         if ($validator->fails()) {
@@ -60,13 +61,16 @@ class AuthController extends Controller
         $user = User::whereEmail($request->email)->first();
 
         if (!$user) {
-            return response()->json([
-                'error' => 'کاربری با این مشخصات وجود ندارد.',
-            ],404);
+            return response()->json(
+                [
+                    'error' => 'کاربری با این مشخصات وجود ندارد.',
+                ],
+                404
+            );
         }
 
         if (!Hash::check($request->password, $user->password)) {
-            return response()->json(['error' => 'رمزعبور اشتباه است.'],401);
+            return response()->json(['error' => 'رمزعبور اشتباه است.'], 401);
         }
 
         $token = $user->createToken('myApp')->plainTextToken;

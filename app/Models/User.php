@@ -37,6 +37,11 @@ class User extends Authenticatable
         return $this->belongsToMany(Room::class)->withPivot('role_in_room');
     }
 
+    public function ownerRooms()
+    {
+        return $this->belongsToMany(Room::class)->wherePivot('role_in_room','owner');
+    }
+
     public function messages()
     {
         return $this->hasMany(Message::class);
