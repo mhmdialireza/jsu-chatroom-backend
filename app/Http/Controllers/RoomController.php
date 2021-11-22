@@ -144,7 +144,7 @@ class RoomController extends Controller
             }
         }
         $message = new Message();
-        $message->message = 'وارد گروه شد ' . auth()->user()->name;
+        $message->message = auth()->user()->name.'وارد گروه شد ';
         $message->user_id = auth()->user()->id;
         $message->room_id = $room->id;
         $message->type = 'jlk';
@@ -192,7 +192,7 @@ class RoomController extends Controller
         }
 
         $x = Message::create([
-            'message' => 'از گروه خارج شد ' . auth()->user()->name,
+            'message' =>  auth()->user()->name.'از گروه خارج شد ' ,
             'user_id' => auth()->user()->id,
             'room_id' => $room->id,
             'type' => 'jlk',
@@ -484,7 +484,7 @@ class RoomController extends Controller
         }
 
         $x = Message::create([
-            'message' => 'از گروه اخراج شد ' . $user->name,
+            'message' => $user->name.'از گروه اخراج شد ',
             'user_id' => $user->id,
             'room_id' => $roomId,
             'type' => 'jlk',
