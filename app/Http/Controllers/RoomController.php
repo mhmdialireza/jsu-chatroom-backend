@@ -316,11 +316,9 @@ class RoomController extends Controller
         ]);
 
         if ($validator->fails()) {
-            return response()->json(
-                ['error' => $validator->getMessageBag()],
-                400
-            );
+            return response()->json(['error' => $validator->getMessageBag()],400);
         }
+
         if ($room->pic_path) {
             $imageService->deleteImage($room->pic_path);
         }
@@ -484,7 +482,7 @@ class RoomController extends Controller
         }
 
         $x = Message::create([
-            'message' => 'از گروه اخراج شد ' . auth()->user()->name,
+            'message' => 'از گروه اخراج شد ' . $user->name,
             'user_id' => auth()->user()->id,
             'room_id' => $roomId,
             'type' => 'jlk',
