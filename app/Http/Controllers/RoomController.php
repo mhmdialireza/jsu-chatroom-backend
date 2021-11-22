@@ -145,7 +145,7 @@ class RoomController extends Controller
         }
         $message = new Message();
         $message->message = 'وارد گروه شد ' . auth()->user()->name;
-        $message->user_id = $room->adminId();
+        $message->user_id = auth()->user()->id;
         $message->room_id = $room->id;
         $message->type = 'jlk';
         $message->save();
@@ -176,7 +176,7 @@ class RoomController extends Controller
         ) {
             $x = Message::create([
                 'message' => Carbon::instance(now())->toDateString(),
-                'user_id' => $room->members()->first()->id,
+                'user_id' => auth()->user()->id,
                 'room_id' => $room->id,
                 'type' => 'time',
             ]);
@@ -321,6 +321,8 @@ class RoomController extends Controller
 
         if ($room->pic_path) {
             $imageService->deleteImage($room->pic_path);
+            $room->pic_path = null;
+            $room->save();
         }
 
         $result = null;
@@ -483,7 +485,7 @@ class RoomController extends Controller
 
         $x = Message::create([
             'message' => 'از گروه اخراج شد ' . $user->name,
-            'user_id' => auth()->user()->id,
+            'user_id' => $user->id,
             'room_id' => $roomId,
             'type' => 'jlk',
         ]);
