@@ -106,7 +106,7 @@ class RoomController extends Controller
         }
 
         if (
-            !count(Message::where('room_id', $room->room_id)->get()) &&
+            !count(Message::where('room_id', $room->room_id)->get()) ||
             !Carbon::instance(
                 Message::where('room_id', $room->room_id)
                     ->latest()
@@ -167,7 +167,7 @@ class RoomController extends Controller
         }
 
         if (
-            !count(Message::where('room_id', $room->room_id)->get()) &&
+            !count(Message::where('room_id', $room->room_id)->get()) ||
             !Carbon::instance(
                 Message::where('room_id', $room->room_id)
                     ->latest()
@@ -466,7 +466,7 @@ class RoomController extends Controller
         }
 
         if (
-            !count(Message::where('room_id', $room->room_id)->get()) &&
+            !count(Message::where('room_id', $room->room_id)->get()) ||
             !Carbon::instance(
                 Message::where('room_id', $room->room_id)
                     ->latest()
