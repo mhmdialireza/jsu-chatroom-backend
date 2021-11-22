@@ -100,15 +100,15 @@ class RoomController extends Controller
                 404
             );
         }
-
+        
         if (count($room->members) == 50) {
             return response()->json(['error' => 'اعضای گروه کامل است'], 400);
         }
 
         if (
-            !count(Message::where('room_id', $room->room_id)->get()) ||
+            !count(Message::where('room_id', $room->id)->get()) ||
             !Carbon::instance(
-                Message::where('room_id', $room->room_id)
+                Message::where('room_id', $room->id)
                     ->latest()
                     ->first()->created_at
             )->isToday()
@@ -167,9 +167,9 @@ class RoomController extends Controller
         }
 
         if (
-            !count(Message::where('room_id', $room->room_id)->get()) ||
+            !count(Message::where('room_id', $room->id)->get()) ||
             !Carbon::instance(
-                Message::where('room_id', $room->room_id)
+                Message::where('room_id', $room->id)
                     ->latest()
                     ->first()->created_at
             )->isToday()
@@ -466,9 +466,9 @@ class RoomController extends Controller
         }
 
         if (
-            !count(Message::where('room_id', $room->room_id)->get()) ||
+            !count(Message::where('room_id', $room->id)->get()) ||
             !Carbon::instance(
-                Message::where('room_id', $room->room_id)
+                Message::where('room_id', $room->id)
                     ->latest()
                     ->first()->created_at
             )->isToday()
