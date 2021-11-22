@@ -106,7 +106,7 @@ class RoomController extends Controller
         }
 
         if (
-            !count(Message::where('room_id', $room->room_id)->get()) ||
+            !count(Message::where('room_id', $room->room_id)->get()) &&
             !Carbon::instance(
                 Message::where('room_id', $room->room_id)
                     ->latest()
@@ -115,12 +115,12 @@ class RoomController extends Controller
         ) {
             $message = new Message();
             $message->message = Carbon::instance(now())->toDateString();
-            $message->user_id = $room->adminId();
+            $message->user_id = auth()->user()->id;
             $message->room_id = $room->id;
             $message->type = 'time';
             $message->save();
         }
-        
+ 
         if ($room->members->contains(auth()->user())) {
             return response()->json(
                 [
@@ -167,7 +167,7 @@ class RoomController extends Controller
         }
 
         if (
-            !count(Message::where('room_id', $room->room_id)->get()) ||
+            !count(Message::where('room_id', $room->room_id)->get()) &&
             !Carbon::instance(
                 Message::where('room_id', $room->room_id)
                     ->latest()
@@ -466,7 +466,7 @@ class RoomController extends Controller
         }
 
         if (
-            !count(Message::where('room_id', $room->room_id)->get()) ||
+            !count(Message::where('room_id', $room->room_id)->get()) &&
             !Carbon::instance(
                 Message::where('room_id', $room->room_id)
                     ->latest()
